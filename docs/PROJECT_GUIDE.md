@@ -27,8 +27,9 @@
 
 ## 현재 참고 상태
 
-- 2026-11-12: 저장소 뼈대와 1단계 설계·계획 문서만 있다. 다음은 계획서의 Task 1부터.
-- 2026-11-12 (Task 1): `app/` Tauri 2 셸 생성(식별자 `team.approid.resm`, productName `RESM`, 아이콘은 `real-es-desktop` 세트 복사). 화면은 임시로 `app/spike/index.html`(우편번호 실험 페이지). cargo workspace members는 지금 있는 `app/src-tauri` 만 둔다(`server` 는 만드는 Task에서 다시 넣는다).
+- 2026-11-12: 저장소 뼈대와 1단계 설계·계획 문서가 있고, 서버 뼈대(Task 2)까지 끝났다. 다음은 계획서의 Task 3부터.
+- 2026-11-12 (Task 1): `app/` Tauri 2 셸 생성(식별자 `team.approid.resm`, productName `RESM`, 아이콘은 `real-es-desktop` 세트 복사). 화면은 임시로 `app/spike/index.html`(우편번호 실험 페이지). cargo workspace members는 `server`, `app/src-tauri`.
+- 2026-11-12 (Task 2): `server/` axum 서버 뼈대. `GET /api/v1/health`, 오류는 `{ "error": "한국어 메시지" }`, 미등록 `/api/v1` 경로는 JSON 404. 테스트 DB는 전용 Docker 컨테이너(`resm-dev-pg`, 127.0.0.1:5433)의 `real_es_test`.
 - **우편번호 검색 방식: `embed`** — 원본처럼 Daum `postcode.v2.js` 를 동적으로 로드해 `new daum.Postcode({...}).embed(el)`. 세 플랫폼 모두 `판교역로 235` 검색 → 첫 결과 선택 → 우편번호 `13494`·도로명주소 출력 확인. `server-iframe`·`tauri-window` 대안은 필요 없었다.
   - 플랫폼별 실제 출처(`location.origin`): Windows 앱(내장 자산) `http://tauri.localhost`, Android 앱(폰·태블릿 에뮬레이터, 디버그 APK) `http://tauri.localhost`, 브라우저 `http://localhost:<port>`. `tauri dev`(devUrl 없음)일 때 Windows는 `http://127.0.0.1:1430`. `.env.example` 의 `RESM_ALLOWED_ORIGINS` 는 이미 `http://tauri.localhost` 를 포함해 고치지 않았다.
   - 주의: 우편번호 검색 iframe이 "t1.daumcdn.net 도메인 종료 안내 - 2026년 11월 30일까지 t1.kakaocdn.net으로 변경" 공지를 띄운다. `https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js` 는 같은 파일을 준다. 실제 컴포넌트(Task 7)는 kakaocdn 주소를 써야 한다.
