@@ -127,7 +127,7 @@ function FieldInput({ field, meta, label, value, onChange }: {
         <Input id={field.key} type="tel" inputMode="tel" value={value} onChange={(e) => onChange(formatTel(e.target.value))} placeholder={meta.placeholder} />
       ) : meta.formInput === "money" ? (
         <InputGroup>
-          <InputGroupInput id={field.key} inputMode="numeric" className="text-right tabular-nums" placeholder="0" value={value} onChange={(e) => onChange(formatManwonInput(e.target.value))} />
+          <InputGroupInput id={field.key} inputMode="decimal" className="text-right tabular-nums" placeholder="0" value={value} onChange={(e) => onChange(formatManwonInput(e.target.value))} />
           <InputGroupAddon align="inline-end"><InputGroupText>{meta.unit}</InputGroupText></InputGroupAddon>
         </InputGroup>
       ) : meta.formInput === "area" || meta.formInput === "count" ? (
