@@ -9,7 +9,7 @@ resm Rust 서버(`resm-server`)를 기존 `real-es` 운영 스택 옆에 **별�
 | 파일 | 설명 |
 | --- | --- |
 | `infra/Dockerfile` | 다단계 빌드: Node/pnpm 으로 `web` → Rust 로 `resm-server`(`--locked`) → debian-slim 런타임(비루트 uid 10001, `EXPOSE 3104`) |
-| `infra/compose.zorin.yml` | project `resm-rust`, 서비스 `resm-server` 하나. `127.0.0.1:3104:3104`, 기존 네트워크에 `external` 참여 |
+| `infra/compose.zorin.yml` | project `resm-rust`, 서비스 `resm-server` 하나. `127.0.0.1:3105:3104`(호스트 3104 는 다른 서비스가 사용 중), 기존 네트워크에 `external` 참여 |
 | `infra/resm.env.example` | 환경 파일 견본(이름과 비밀 아닌 예시 값). 실제 `infra/resm.env` 는 git 에 올리지 않는다 |
 | `.dockerignore` | `.env`, `target`, `node_modules`, `.git` 등을 빌드 컨텍스트에서 제외 |
 
@@ -28,7 +28,7 @@ resm Rust 서버(`resm-server`)를 기존 `real-es` 운영 스택 옆에 **별�
 ## 사전 조건 (Zorin)
 
 - 기존 스택 실행 중: `docker compose` 로 `real-es` 의 `postgres`·`app`·`tunnel` 이 떠 있고 `docker network ls` 에 `real-es-frontend`·`real-es-backend` 가 있다.
-- 호스트 포트 `127.0.0.1:3104` 가 비어 있다(`ss -ltn | grep 3104`).
+- 호스트 포트 `127.0.0.1:3105` 가 비어 있다(`ss -ltn | grep 3105`).
 - `real-es/infra/secrets/app.env` 를 읽을 수 있다(비밀번호 출처).
 - `resm-server` 라는 컨테이너가 없다(`docker ps -a --filter name=resm-server`).
 - 시작 전 기준 상태를 적어 둔다: `docker ps --format '{{.Names}} {{.Status}}'`, `curl -i https://resm.approid.team/api/health`, `free -h`, `nproc`.
@@ -89,7 +89,7 @@ resm Rust 서버(`resm-server`)를 기존 `real-es` 운영 스택 옆에 **별�
    docker compose -p resm-rust -f infra/compose.zorin.yml up -d --build
    docker compose -p resm-rust -f infra/compose.zorin.yml ps      # healthy 확인
    ```
-4. Zorin 에서 로컬 확인: `curl -i http://127.0.0.1:3104/api/v1/health` → 200 `{"status":"ok"}`. `docker logs resm-server` 에 오류가 없어야 한다.
+4. Zorin 에서 로컬 확인: `curl -i http://127.0.0.1:3105/api/v1/health` → 200 `{"status":"ok"}`. `docker logs resm-server` 에 오류가 없어야 한다.
 5. 기존 스택 영향 확인: `curl -i https://resm.approid.team/api/health` 와 `docker ps` 로 `real-es` 컨테이너가 그대로인지.
 6. **Cloudflare 대시보드(소유자 작업, 운영 변경)**: Zero Trust → Networks → Tunnels → `real-es-zorin` → Public Hostname 추가.
    - Subdomain/Domain: `resm2.approid.team`

@@ -16,7 +16,7 @@ services:
     env_file:
       - ./resm.env
     ports:
-      - "127.0.0.1:3104:3104"
+      - "127.0.0.1:3105:3104" # 호스트 3104 는 Zorin 의 다른 서비스가 사용 중
     healthcheck:
       # 런타임 이미지에 curl/wget 이 없어 bash 의 /dev/tcp 로 직접 GET 한다(추가 패키지 없음).
       test:
