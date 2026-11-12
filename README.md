@@ -37,6 +37,8 @@ docker run -d --name resm-dev-pg --restart unless-stopped \
   -e POSTGRES_PASSWORD=<임의 비밀번호> -p 127.0.0.1:5433:5432 \
   -v resm-dev-pg-data:/var/lib/postgresql/data postgres:16
 docker exec resm-dev-pg psql -U postgres -c "CREATE DATABASE real_es" -c "CREATE DATABASE real_es_test"
+# 테스트 DB 한 번만: 기본 시간대를 Asia/Seoul 로. 서버가 세션을 UTC 로 고정하는 처리가 테스트에서 실제로 검증되게 한다.
+docker exec resm-dev-pg psql -U postgres -c "ALTER DATABASE real_es_test SET timezone TO 'Asia/Seoul'"
 # 원본 마이그레이션 적용 (원본 폴더에서, DATABASE_URL 만 덮어쓴다)
 cd c:\Wspace\real-es
 DATABASE_URL="postgresql://postgres:<비밀번호>@127.0.0.1:5433/real_es?schema=public" pnpm prisma migrate deploy
@@ -45,11 +47,18 @@ DATABASE_URL="postgresql://postgres:<비밀번호>@127.0.0.1:5433/real_es_test?s
 
 `.env.example` 을 `.env` 로 복사해 `DATABASE_URL`·`TEST_DATABASE_URL` 을 위 주소(`127.0.0.1:5433`)로 맞춘다. `.env` 는 git에 올리지 않는다.
 
+### 환경변수
+
+이름만 적는다(값은 `.env`, 예시는 `.env.example`): `DATABASE_URL`, `TEST_DATABASE_URL`, `RESM_BIND`, `RESM_ALLOWED_ORIGINS`, `RESM_COOKIE_SECURE`, `RESM_STATIC_DIR`.
+
+- 서버 실행에는 `DATABASE_URL` 이 필요하고, 서버 테스트와 E2E 에는 `TEST_DATABASE_URL` 이 필요하다.
+- `RESM_STATIC_DIR` 를 `web/dist` 로 두면 서버가 SPA 를 같이 제공한다(없는 경로는 `index.html`, `/api/...` 는 JSON 404). 비워 두면 API 만 제공한다.
+
 ### 서버
 
 ```bash
-cargo run -p resm-server          # 127.0.0.1:3104
-cargo test -p resm-server        # TEST_DATABASE_URL 필요
+pnpm dev:server                   # cargo run -p resm-server, 127.0.0.1:3104
+pnpm build:web                    # 서버가 SPA 도 제공하게 하려면 RESM_STATIC_DIR=web/dist 로 실행
 ```
 
 ### 웹 (React SPA)
@@ -57,9 +66,20 @@ cargo test -p resm-server        # TEST_DATABASE_URL 필요
 ```bash
 pnpm install
 pnpm dev:web      # http://localhost:5173 (/api 는 127.0.0.1:3104 로 프록시, 서버를 같이 띄운다)
-pnpm test:web     # vitest
 pnpm build:web    # web/dist
 ```
+
+### 테스트 3종
+
+```bash
+cargo test -p resm-server        # 서버 통합 테스트 (TEST_DATABASE_URL 필요)
+pnpm test:web                    # 웹 단위 테스트 (vitest)
+pnpm build:web && pnpm test:e2e  # 브라우저 E2E (Playwright)
+```
+
+- E2E 최초 1회: `pnpm --dir web exec playwright install chromium`.
+- `pnpm test:e2e` 는 서버를 직접 띄운다(`web/dist` 제공, `TEST_DATABASE_URL` 을 서버의 `DATABASE_URL` 로 넘김). 개발 DB 는 건드리지 않으며 `TEST_DATABASE_URL` 이 없으면 시작 전에 실패한다. 3104 포트가 이미 쓰이고 있으면 실패하므로 개발 서버를 먼저 끈다.
+- 서버 테스트·E2E 는 둘 다 테스트 DB 를 쓰지만 테이블을 비우지 않고 실행마다 새 이메일을 쓰므로 동시에 돌려도 서로를 깨지 않는다. 그래도 한 번에 하나씩 실행하길 권한다(E2E 가 만든 사용자·매물은 테스트 DB 에 남는다).
 
 ## 로드맵
 
@@ -82,3 +102,4 @@ pnpm build:web    # web/dist
 - 2026-11-12: `web/` React SPA 뼈대를 추가했다. 원본 `ui` 프리미티브·사이드바·헤더·푸터·테마 토글을 그대로 옮기고, API 클라이언트(쿠키/Bearer 겸용)와 인증 가드(비로그인 → `/login`, 로그인 → `/properties`)를 갖췄다. 서버에 닿지 않으면 "서버에 연결할 수 없습니다" 화면과 다시 시도 버튼이 나온다. 로그인·가입·매물 화면은 자리 표시 상태다.
 - 2026-11-12: `web/` 로그인·회원가입·이용약관·개인정보처리방침 화면을 원본 그대로 옮겼다. 회원가입의 주소 검색은 Daum 우편번호 `embed`(스크립트 주소는 `t1.kakaocdn.net`)로 동작하고, 서버 오류 문구는 폼 안에 한 번만 표시된다. 원본 웹과 계정이 서로 공유됨을 확인했다.
 - 2026-11-12: `web/` 매물 화면(전체·관심·계약진행·계약완료 목록, 등록, 수정)을 원본 그대로 옮겼다. 표/카드 반응형, 검색·필터·50개 페이징, 선택 삭제(확인 다이얼로그), 더블클릭 인라인 편집, 관심 별·색상 태그가 동작한다. 금액은 API가 원 문자열, 화면이 만원이며 변환은 `web/src/lib/properties/money.ts` 한 곳에서만 한다. 엑셀·계약진행 전환·계약 링크·미등록 표시·당사자 섹션은 이후 단계에서 되살린다.
+- 2026-11-12: 서버가 `web/dist` 를 제공한다(`RESM_STATIC_DIR`). 새로고침·딥링크는 SPA 로, 없는 `/api/...` 는 JSON 404 로 응답하고 `assets/` 는 영구 캐시된다. Playwright 브라우저 E2E(가입 → 매물 등록·수정·삭제 → 로그아웃, 모바일 카드)를 테스트 DB 로 실행하고 README 에 개발 실행법을 정리했다.

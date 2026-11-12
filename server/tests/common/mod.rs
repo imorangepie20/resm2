@@ -14,6 +14,10 @@ pub struct TestApp {
 }
 
 pub async fn spawn_app() -> TestApp {
+    spawn_app_with_static(None).await
+}
+
+pub async fn spawn_app_with_static(static_dir: Option<std::path::PathBuf>) -> TestApp {
     let _ = dotenvy::from_path(concat!(env!("CARGO_MANIFEST_DIR"), "/../.env"));
     let url = std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL 이 필요합니다");
     let db = resm_server::db::connect(&url)
@@ -27,7 +31,7 @@ pub async fn spawn_app() -> TestApp {
         bind: listener.local_addr().unwrap(),
         allowed_origins: vec!["http://tauri.localhost".to_string()],
         cookie_secure: false,
-        static_dir: None,
+        static_dir,
     };
     let state = AppState {
         db: db.clone(),
