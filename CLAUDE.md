@@ -64,7 +64,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 5. End-of-Task Wrap-up
 
-**코드 변경 작업 단위가 끝나면 문서 업데이트 → 로컬 commit까지 한 번에 마무리한다. push는 사용자가 명시적으로 요청한 경우에만 실행한다.**
+**코드 변경 작업 단위가 끝나면 문서 업데이트 → 로컬 commit까지 한 번에 마무리한다. 주요 작업 단위(계획의 Task 하나가 검토를 통과한 시점)가 끝나면 확인 없이 push 한다. force push는 사용자 확인 후에만 한다.**
 
 다음 조건 중 하나가 만족되면 작업 단위가 끝난 것으로 본다:
 - 한 묶음의 기능/수정이 빌드·테스트 검증까지 끝난 시점
@@ -75,7 +75,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 1. 변경 내용을 한두 줄로 요약해 [README.md](README.md) §"현재 반영 상태"와 [docs/PROJECT_GUIDE.md](docs/PROJECT_GUIDE.md) §"현재 참고 상태"에 추가한다. 중간 시행착오나 디버깅 잡일은 git history에 맡기고 문서엔 사용자 가시 효과만 적는다.
 2. `git status`로 변경 파일을 확인한다. 의도치 않은 파일이 섞여 있으면 사용자에게 알린다.
 3. 작업 단위가 끝나면 로컬 commit은 확인 없이 진행한다.
-4. **push는 절대 자동으로 하지 않는다** — 사용자가 명시적으로 "push해"라고 지시한 경우에만 실행한다.
+4. **주요 작업 단위(계획의 Task 하나가 검토를 통과한 시점)가 끝나면 확인 없이 push 한다.** force push는 사용자 확인 후에만 한다.
 5. **commit 메시지 끝에 반드시 `문서 갱신: README §현재 반영 상태 + PROJECT_GUIDE §현재 참고 상태` 한 줄을 붙인다.** 이 줄을 적을 수 없으면(=아직 안 갱신함) commit하지 말고 1번으로 돌아가 먼저 갱신한다. 문서 변경 없이 코드만 staged면 누락 신호로 보고 멈춘다.
 
 이 룰의 목적: 진척 문서와 코드 변경의 정합성 유지, 그리고 검토되지 않은 변경이 GitHub에 올라가는 것 방지.

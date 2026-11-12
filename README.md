@@ -41,3 +41,4 @@ resm/
 ## 현재 반영 상태
 
 - 2026-11-12: 저장소 뼈대(cargo/pnpm workspace, .gitignore, .env.example, 작업 규칙)와 1단계 설계·계획 문서를 추가했다. 코드는 아직 없다.
+- 2026-11-12: `app/` Tauri 2 셸(RESM, `team.approid.resm`)을 만들고, Daum 우편번호 검색을 원본 방식(`embed`)으로 Windows 앱·Android 폰/태블릿 에뮬레이터·브라우저에서 확인했다. 이 PC에 Android 빌드 환경을 설치했다.
