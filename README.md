@@ -67,3 +67,4 @@ cargo test -p resm-server        # TEST_DATABASE_URL 필요
 - 2026-11-12: 저장소 뼈대(cargo/pnpm workspace, .gitignore, .env.example, 작업 규칙)와 1단계 설계·계획 문서를 추가했다. `app/` 외 코드는 이후 작업에서 추가한다.
 - 2026-11-12: `app/` Tauri 2 셸(RESM, `team.approid.resm`)을 만들고, Daum 우편번호 검색을 원본 방식(`embed`)으로 Windows 앱·Android 폰/태블릿 에뮬레이터·브라우저에서 확인했다. 이 PC에 Android 빌드 환경을 설치했다.
 - 2026-11-12: `server/` axum API 서버 뼈대를 추가했다. 환경변수 설정, `{ "error": "..." }` 오류 응답, `GET /api/v1/health`(DB 확인)가 동작한다.
+- 2026-11-12: 서버 인증 코어를 추가했다. 원본 bcryptjs 해시(cost 12)를 그대로 검증하고, 세션 토큰(32바이트 base64url, DB에는 SHA-256 hex)·`CurrentUser` 추출기(Bearer 우선, 없으면 `session` 쿠키)가 기존 Next.js 앱의 `Session` 행과 호환된다.

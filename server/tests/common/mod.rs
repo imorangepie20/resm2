@@ -56,3 +56,26 @@ pub fn unique_email() -> String {
     let n = COUNTER.fetch_add(1, Ordering::Relaxed);
     format!("test-{}-{nanos}-{n}@example.com", std::process::id())
 }
+
+pub async fn insert_user(db: &PgPool, email: &str, pw: &str) -> String {
+    let agency_id = cuid2::create_id();
+    sqlx::query(r#"INSERT INTO "Agency" ("id", "name") VALUES ($1, $2)"#)
+        .bind(&agency_id)
+        .bind("테스트 중개사무소")
+        .execute(db)
+        .await
+        .unwrap();
+    let user_id = cuid2::create_id();
+    sqlx::query(
+        r#"INSERT INTO "User" ("id", "agencyId", "email", "passwordHash", "role")
+           VALUES ($1, $2, $3, $4, 'member')"#,
+    )
+    .bind(&user_id)
+    .bind(&agency_id)
+    .bind(email)
+    .bind(resm_server::auth::password::hash(pw).unwrap())
+    .execute(db)
+    .await
+    .unwrap();
+    user_id
+}
