@@ -3,6 +3,7 @@ pub mod config;
 pub mod error;
 pub mod http;
 pub mod notify;
+pub mod properties;
 
 use std::sync::Arc;
 
@@ -34,6 +35,7 @@ fn api_v1(state: AppState) -> Router<AppState> {
     Router::new()
         .route("/health", get(health))
         .merge(auth::handlers::routes())
+        .merge(properties::handlers::routes())
         .fallback(api_not_found)
         .layer(from_fn_with_state(state, http::origin_check))
 }

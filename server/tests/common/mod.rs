@@ -79,3 +79,29 @@ pub async fn insert_user(db: &PgPool, email: &str, pw: &str) -> String {
     .unwrap();
     user_id
 }
+
+/// 새 사용자(+사무소)와 세션을 DB에 직접 만든다(bcrypt 회피). `(bearer 토큰, user_id)` 반환.
+pub async fn signup(app: &TestApp) -> (String, String) {
+    let agency_id = cuid2::create_id();
+    sqlx::query(r#"INSERT INTO "Agency" ("id", "name") VALUES ($1, $2)"#)
+        .bind(&agency_id)
+        .bind("테스트 중개사무소")
+        .execute(&app.db)
+        .await
+        .unwrap();
+    let user_id = cuid2::create_id();
+    sqlx::query(
+        r#"INSERT INTO "User" ("id", "agencyId", "email", "passwordHash", "role")
+           VALUES ($1, $2, $3, 'x', 'member')"#,
+    )
+    .bind(&user_id)
+    .bind(&agency_id)
+    .bind(unique_email())
+    .execute(&app.db)
+    .await
+    .unwrap();
+    let (token, _) = resm_server::auth::session::create(&app.db, &user_id)
+        .await
+        .unwrap();
+    (token, user_id)
+}

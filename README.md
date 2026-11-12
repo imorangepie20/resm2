@@ -69,3 +69,4 @@ cargo test -p resm-server        # TEST_DATABASE_URL 필요
 - 2026-11-12: `server/` axum API 서버 뼈대를 추가했다. 환경변수 설정, `{ "error": "..." }` 오류 응답, `GET /api/v1/health`(DB 확인)가 동작한다.
 - 2026-11-12: 서버 인증 코어를 추가했다. 원본 bcryptjs 해시(cost 12)를 그대로 검증하고, 세션 토큰(32바이트 base64url, DB에는 SHA-256 hex)·`CurrentUser` 추출기(Bearer 우선, 없으면 `session` 쿠키)가 기존 Next.js 앱의 `Session` 행과 호환된다.
 - 2026-11-12: 서버 인증 API를 추가했다. 가입·로그인·로그아웃·me API(`/api/v1/auth/*`), 가입 시 superadmin 알림, CORS·쿠키 인증 Origin 검사를 추가했다. 원본 bcryptjs 계정으로 로그인되고 발급 세션의 `tokenHash` 가 원본 계산과 일치함을 확인했다.
+- 2026-11-12: 서버 매물 API를 추가했다. 목록(view: all·favorites·in-progress·contracted)·단건·등록·부분 수정(PATCH, null=비움)·일괄 삭제(`/api/v1/properties*`)가 본인 매물만 대상으로 동작하고, 금액(price·rentPrice)은 원 단위 십진 문자열로 주고받으며 등록 시 superadmin 알림이 생성된다.
