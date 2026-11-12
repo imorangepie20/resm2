@@ -1,7 +1,7 @@
 # resm Rust 서버(resm-server) 전용 compose. 기존 real-es 스택(~/apps/real-es)과 분리된 project 로 실행한다.
-#   docker compose -f infra/compose.zorin.yml up -d --build
+#   docker compose -p resm-rust -f infra/compose.zorin.yml up -d --build
 # 기존 스택의 컨테이너·볼륨·네트워크는 선언하지도 수정하지도 않는다(네트워크는 external 참조만).
-name: resm-rust
+name: resm-rust # 명령에는 항상 -p resm-rust 를 붙인다(환경 변수 COMPOSE_PROJECT_NAME 이 이 값보다 우선한다)
 
 services:
   resm-server:

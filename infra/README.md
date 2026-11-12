@@ -30,6 +30,9 @@ resm Rust 서버(`resm-server`)를 기존 `real-es` 운영 스택 옆에 **별�
 - 기존 스택 실행 중: `docker compose` 로 `real-es` 의 `postgres`·`app`·`tunnel` 이 떠 있고 `docker network ls` 에 `real-es-frontend`·`real-es-backend` 가 있다.
 - 호스트 포트 `127.0.0.1:3104` 가 비어 있다(`ss -ltn | grep 3104`).
 - `real-es/infra/secrets/app.env` 를 읽을 수 있다(비밀번호 출처).
+- `resm-server` 라는 컨테이너가 없다(`docker ps -a --filter name=resm-server`).
+- 시작 전 기준 상태를 적어 둔다: `docker ps --format '{{.Names}} {{.Status}}'`, `curl -i https://resm.approid.team/api/health`, `free -h`, `nproc`.
+- 모든 compose 명령에 `-p resm-rust` 를 붙인다. 셸에 `COMPOSE_PROJECT_NAME=real-es` 가 남아 있으면 파일의 `name:` 보다 우선해 기존 스택을 건드릴 수 있다.
 
 ## 배포 절차
 
@@ -46,10 +49,11 @@ resm Rust 서버(`resm-server`)를 기존 `real-es` 운영 스택 옆에 **별�
    # real-es/infra/secrets/app.env 의 DATABASE_URL 에서 "?schema=public" 만 빼고 같은 값을 쓴다.
    ```
 3. 빌드·기동 (Rust 빌드는 처음 수 분 걸린다).
+   **주의**: 빌드는 모든 코어와 수 GB 메모리를 쓴다. 같은 호스트에서 운영 중인 기존 앱·DB 가 그동안 느려질 수 있고, 메모리가 모자라면 운영 컨테이너가 죽을 수 있다. `free -h` 의 여유가 4GB 미만이면 여기서 빌드하지 말고, 같은 아키텍처의 다른 PC 에서 `docker build -f infra/Dockerfile -t resm-server:local .` → `docker save resm-server:local | gzip | ssh <zorin> 'gunzip | docker load'` 로 옮긴 뒤 `--build` 없이 `up -d` 한다.
 
    ```sh
-   docker compose -f infra/compose.zorin.yml up -d --build
-   docker compose -f infra/compose.zorin.yml ps      # healthy 확인
+   docker compose -p resm-rust -f infra/compose.zorin.yml up -d --build
+   docker compose -p resm-rust -f infra/compose.zorin.yml ps      # healthy 확인
    ```
 4. Zorin 에서 로컬 확인: `curl -i http://127.0.0.1:3104/api/v1/health` → 200 `{"status":"ok"}`. `docker logs resm-server` 에 오류가 없어야 한다.
 5. 기존 스택 영향 확인: `curl -i https://resm.approid.team/api/health` 와 `docker ps` 로 `real-es` 컨테이너가 그대로인지.
@@ -57,6 +61,7 @@ resm Rust 서버(`resm-server`)를 기존 `real-es` 운영 스택 옆에 **별�
    - Subdomain/Domain: `resm2.approid.team`
    - Service: Type `HTTP`, URL `resm-server:3104`
    - Additional settings 의 **HTTP Host Header 는 비워 둔다**(아래 "Host/Origin" 참고).
+   - 이 터널은 기존 `resm.approid.team` 과 공유한다. 기존 호스트명 행은 건드리지 않고, 저장 직후 `curl -i https://resm.approid.team/api/health` 로 기존 사이트를 다시 확인한다.
    - 터널 컨테이너가 `real-es-frontend` 망에 있고 `resm-server` 도 같은 망에 있으므로 이름으로 해석된다.
 
 ## 환경변수
@@ -94,20 +99,21 @@ Origin 검사는 `Authorization` 없는 상태 변경 요청에서 `Origin` 의 
 | `Origin: https://tauri.localhost` | 401 |
 | `Host: resm-server:3104`, `Origin: https://resm2.approid.team` | **403** |
 
-마지막 줄이 핵심이다. 프록시가 Host 를 업스트림 이름(`resm-server:3104`)으로 바꾸면 브라우저 로그인이 막힌다. cloudflared 의 Host 설정(`httpHostHeader`, 대시보드 "HTTP Host Header")은 기본이 빈 값이며, 공식 문서는 빈 값일 때 무엇을 보내는지 적지 않는다. 알려진 동작은 원래 요청의 Host(공개 호스트명)를 그대로 전달하는 것이다. 따라서 이 칸을 비워 두고 확인 목록 8번으로 실제 검증한다. 만약 403 이 나오면 Host Header 칸을 `resm2.approid.team` 으로 채우거나, 차선책으로 `RESM_ALLOWED_ORIGINS` 에 `https://resm2.approid.team` 을 추가하고 `docker compose ... up -d` 로 재기동한다.
+마지막 줄이 핵심이다. 프록시가 Host 를 업스트림 이름(`resm-server:3104`)으로 바꾸면 브라우저 로그인이 막힌다. cloudflared 의 Host 설정(`httpHostHeader`, 대시보드 "HTTP Host Header")은 기본이 빈 값이며, 공식 문서는 빈 값일 때 무엇을 보내는지 적지 않는다. 알려진 동작은 원래 요청의 Host(공개 호스트명)를 그대로 전달하는 것이다. 따라서 이 칸을 비워 두고 확인 목록 8번으로 실제 검증한다. 만약 403 이 나오면 Host Header 칸을 `resm2.approid.team` 으로 채운다(권장: 서버 설정·재배포가 필요 없고 출처 검사가 그대로 유지된다). 그럴 수 없을 때만 차선책으로 `RESM_ALLOWED_ORIGINS` 에 `https://resm2.approid.team` 을 추가하고 `docker compose ... up -d` 로 재기동한다.
 
 ## 롤백
 
-DB 는 건드리지 않았다(서버는 마이그레이션을 하지 않고 스키마 변경도 없다). **운영 변경**:
+스키마는 건드리지 않았다(서버는 마이그레이션을 하지 않는다). 새 서버로 로그인·등록한 세션·매물·알림 행은 공유 DB 에 그대로 남는다(의도된 동작). **운영 변경**:
 
-1. Cloudflare 대시보드에서 `resm2.approid.team` 공개 호스트명 삭제.
-2. `cd ~/apps/resm && docker compose -f infra/compose.zorin.yml down`.
+1. Cloudflare 대시보드에서 `resm2.approid.team` 공개 호스트명 삭제(DNS 에 CNAME 이 남으면 그것도 삭제).
+2. `cd ~/apps/resm && docker compose -p resm-rust -f infra/compose.zorin.yml down`.
 3. `resm.approid.team`(기존 스택)은 영향이 없다. 확인: `curl -i https://resm.approid.team/api/health`.
 
 ## 알려진 제한
 
 - 서버 시작 시 DB 에 연결하지 못하면 즉시 종료하고, `restart: unless-stopped` 가 재시도한다.
 - 서버는 SIGTERM 핸들러가 없다. compose 의 `init: true`(tini) 덕에 `docker stop` 이 1초 안에 끝난다. `docker run` 으로 직접 실행할 때는 `--init` 을 붙인다.
+- 배포 전 DB 백업은 하지 않는다(현재 운영 데이터는 가상 데이터라는 소유자 결정, 설계 §5.6). 실데이터가 들어오면 첫 쓰기 전에 `pg_dump` 를 먼저 한다.
 - 로컬 DB 와 운영 DB 의 데이터는 다르다. 로컬 검증은 임시 계정을 만들었다.
 - 컨테이너 메모리 상한 256M, 로그 10MB x 3 회전.
 - Windows 설치본은 코드 서명이 없고 자동 업데이트가 없다.
