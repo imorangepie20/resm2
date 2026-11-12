@@ -6,14 +6,14 @@
 
 /* 시스템 폰트 사용 - 맥 한글 기본 */
 :root {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif;
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   /* --font-sans는 상단 :root에서 정의 (Safari 호환성) */
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -136,5 +136,5 @@
 
 /* 맥 WebKit 웹뷰에서 명조체 폴백 방지 - 강제 적용 */
 html {
-  font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif !important;
+  font-family: var(--font-geist-sans), "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif !important;
 }
