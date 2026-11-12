@@ -87,8 +87,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 새 페이지·컴포넌트를 만들기 전에:
 - 먼저 `web/src/components/ui/`(버튼·카드·테이블 등 프리미티브), `web/src/components/dashboards/`·`web/src/components/pages/`·`web/src/components/apps/`(완성 패턴)를 검색해 재사용 가능한 것을 찾는다.
 - 비슷한 화면이 이미 있으면 그 구조·레이아웃을 그대로 따른다. 처음부터 새로 짜지 않는다.
-- UI를 새로 짜기 전에 원본 `c:\Wspace
-eal-es\src` 에 같은 화면이 있는지 먼저 본다.
+- UI를 새로 짜기 전에 원본 `c:\Wspace\real-es\src` 에 같은 화면이 있는지 먼저 본다.
 - 프리미티브를 직접 만들지 않는다. 없으면 멈추고 사용자에게 알린다.
 
 자작 UI가 정말 필요할 때만:
