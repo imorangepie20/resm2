@@ -29,7 +29,7 @@ pub async fn spawn_app_with_static(static_dir: Option<std::path::PathBuf>) -> Te
     let cfg = Config {
         database_url: url,
         bind: listener.local_addr().unwrap(),
-        allowed_origins: vec!["http://tauri.localhost".to_string()],
+        allowed_origins: vec!["https://tauri.localhost".to_string()],
         cookie_secure: false,
         static_dir,
     };

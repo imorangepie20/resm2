@@ -15,17 +15,21 @@
         "label": "main",
         "title": "RESM",
         "width": 1664,
-        "height": 1040
+        "height": 1040,
+        "useHttpsScheme": true
       }
     ],
     "security": {
       "csp": {
         "default-src": "'self'",
-        "connect-src": "ipc: http://ipc.localhost https://resm2.approid.team",
+        "connect-src": "ipc: https://ipc.localhost https://resm2.approid.team",
         "script-src": "'self' https://t1.kakaocdn.net",
         "style-src": "'self' 'unsafe-inline'",
-        "frame-src": "http://postcode.map.kakao.com https://postcode.map.kakao.com"
-      }
+        "frame-src": "https://postcode.map.kakao.com",
+        "base-uri": "'self'",
+        "form-action": "'self'"
+      },
+      "dangerousDisableAssetCspModification": ["style-src"]
     }
   },
   "bundle": {

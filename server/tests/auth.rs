@@ -411,7 +411,7 @@ async fn bearer_post_with_foreign_origin_is_allowed() {
         .client
         .post(format!("{}/api/v1/auth/logout", app.addr))
         .bearer_auth(body["token"].as_str().unwrap())
-        .header("Origin", "http://tauri.localhost")
+        .header("Origin", "https://tauri.localhost")
         .send()
         .await
         .unwrap();
@@ -425,7 +425,7 @@ async fn preflight_allows_configured_origin() {
     let resp = app
         .client
         .request(reqwest::Method::OPTIONS, &url)
-        .header("Origin", "http://tauri.localhost")
+        .header("Origin", "https://tauri.localhost")
         .header("Access-Control-Request-Method", "POST")
         .header(
             "Access-Control-Request-Headers",
@@ -437,7 +437,7 @@ async fn preflight_allows_configured_origin() {
     assert!(resp.status().is_success(), "{}", resp.status());
     assert_eq!(
         resp.headers()["access-control-allow-origin"],
-        "http://tauri.localhost"
+        "https://tauri.localhost"
     );
     assert!(
         resp.headers()
@@ -464,7 +464,7 @@ async fn login_from_allowed_origin_without_bearer_is_200() {
     let resp = app
         .client
         .post(format!("{}/api/v1/auth/login", app.addr))
-        .header("Origin", "http://tauri.localhost")
+        .header("Origin", "https://tauri.localhost")
         .json(&json!({"email": email, "password": "abcd1234"}))
         .send()
         .await
@@ -480,7 +480,7 @@ async fn signup_from_allowed_origin_without_bearer_is_200() {
     let resp = app
         .client
         .post(format!("{}/api/v1/auth/signup", app.addr))
-        .header("Origin", "http://tauri.localhost")
+        .header("Origin", "https://tauri.localhost")
         .json(&signup_body(&common::unique_email(), "허용출처"))
         .send()
         .await
