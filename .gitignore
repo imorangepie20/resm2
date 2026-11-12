@@ -4,6 +4,9 @@ dist/
 .env
 .env.*
 !.env.example
+# 앱 빌드용 API 주소(비밀 아님)
+!web/.env.tauri-dev
+!web/.env.tauri-prod
 app/src-tauri/gen/android/**/build/
 *.keystore
 test-results/

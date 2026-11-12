@@ -69,6 +69,15 @@ pnpm dev:web      # http://localhost:5173 (/api 는 127.0.0.1:3104 로 프록시
 pnpm build:web    # web/dist
 ```
 
+### Windows 앱 (Tauri)
+
+```bash
+pnpm app:dev        # 로컬 서버(127.0.0.1:3104)에 붙는 앱 창. web/.env.tauri-dev, 서버를 같이 띄운다
+pnpm app:build:win  # 운영 주소(resm2.approid.team)로 NSIS 설치본: target/release/bundle/nsis/RESM_0.1.0_x64-setup.exe
+```
+
+- 앱 빌드는 `web/dist` 를 앱 모드(`vite build --mode tauri-prod`)로 덮어쓴다. 브라우저 화면은 실행 시점에 `/api/v1` 을 쓰므로 그대로 서버가 제공해도 동작하지만, 헷갈리지 않게 브라우저용은 `pnpm build:web` 으로 다시 빌드한다.
+
 ### 테스트 3종
 
 ```bash
@@ -103,3 +112,4 @@ pnpm build:web && pnpm test:e2e  # 브라우저 E2E (Playwright)
 - 2026-11-12: `web/` 로그인·회원가입·이용약관·개인정보처리방침 화면을 원본 그대로 옮겼다. 회원가입의 주소 검색은 Daum 우편번호 `embed`(스크립트 주소는 `t1.kakaocdn.net`)로 동작하고, 서버 오류 문구는 폼 안에 한 번만 표시된다. 원본 웹과 계정이 서로 공유됨을 확인했다.
 - 2026-11-12: `web/` 매물 화면(전체·관심·계약진행·계약완료 목록, 등록, 수정)을 원본 그대로 옮겼다. 표/카드 반응형, 검색·필터·50개 페이징, 선택 삭제(확인 다이얼로그), 더블클릭 인라인 편집, 관심 별·색상 태그가 동작한다. 금액은 API가 원 문자열, 화면이 만원이며 변환은 `web/src/lib/properties/money.ts` 한 곳에서만 한다. 엑셀·계약진행 전환·계약 링크·미등록 표시·당사자 섹션은 이후 단계에서 되살린다.
 - 2026-11-12: 서버가 `web/dist` 를 제공한다(`RESM_STATIC_DIR`). 새로고침·딥링크는 SPA 로, 없는 `/api/...` 는 JSON 404 로 응답하고 `assets/` 는 영구 캐시된다. Playwright 브라우저 E2E(가입 → 매물 등록·수정·삭제 → 로그아웃, 모바일 카드)를 테스트 DB 로 실행하고 README 에 개발 실행법을 정리했다.
+- 2026-11-12: Windows 앱이 실제 화면(`web/`)을 띄운다. 로그인 토큰을 앱 저장소에 보관해 껐다 켜도 로그인이 유지되고, 우편번호 검색·매물 등록/수정/삭제·서버 불통 화면과 다시 시도가 앱에서 동작한다. CSP 를 켰고 `pnpm app:build:win` 으로 운영 주소용 NSIS 설치본을 만든다.

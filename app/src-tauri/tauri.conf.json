@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "identifier": "team.approid.resm",
   "build": {
-    "frontendDist": "../spike"
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../../web/dist",
+    "beforeDevCommand": "pnpm --dir ../web dev --mode tauri-dev",
+    "beforeBuildCommand": "pnpm --dir ../web build --mode tauri-prod"
   },
   "app": {
     "windows": [
@@ -16,7 +19,13 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self'",
+        "connect-src": "ipc: http://ipc.localhost https://resm2.approid.team",
+        "script-src": "'self' https://t1.kakaocdn.net",
+        "style-src": "'self' 'unsafe-inline'",
+        "frame-src": "http://postcode.map.kakao.com https://postcode.map.kakao.com"
+      }
     }
   },
   "bundle": {
