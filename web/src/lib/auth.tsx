@@ -43,9 +43,16 @@ export function useMe() {
   })
 }
 
+// 세션이 바뀌는 모든 곳(로그인·가입·로그아웃·401)에서 부른다: 이전 사용자의 캐시를 남기지 않는다.
+export function resetSession(user: Me | null) {
+  // clear() 는 구독 중인 ["me"] 쿼리까지 캐시에서 떼어내 화면이 갱신되지 않으므로, me 만 남기고 지운다.
+  queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== ME_KEY[0] })
+  queryClient.setQueryData(ME_KEY, user)
+}
+
 async function startSession(res: AuthResponse): Promise<Me> {
   await tokenStore.set(res.token)
-  queryClient.setQueryData(ME_KEY, res.user)
+  resetSession(res.user)
   return res.user
 }
 
@@ -66,7 +73,7 @@ export async function signup(input: SignupInput): Promise<Me> {
 export async function logout(): Promise<void> {
   await api<void>("/auth/logout", { method: "POST" })
   await tokenStore.clear()
-  queryClient.setQueryData(ME_KEY, null)
+  resetSession(null)
 }
 
 export function useLogout() {

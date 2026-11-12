@@ -6,11 +6,12 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/layout/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { setOnUnauthorized } from "@/lib/api"
+import { resetSession } from "@/lib/auth"
 import { queryClient } from "@/lib/query-client"
 import { router } from "@/router"
 
 setOnUnauthorized(() => {
-  queryClient.setQueryData(["me"], null)
+  resetSession(null)
   void router.navigate("/login", { replace: true })
 })
 
