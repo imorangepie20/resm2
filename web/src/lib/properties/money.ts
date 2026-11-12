@@ -21,6 +21,7 @@ export function manwonToWon(input: string): string | null {
   if (s === "") return null
   const m = /^(\d*)(?:\.(\d*))?$/.exec(s)
   if (!m || (m[1] === "" && !m[2])) throw new Error(INVALID)
+  if (m[1].replace(/^0+/, "").length > 14) throw new Error(INVALID) // 원 18자리(서버 상한) = 만원 정수 14자리
   const frac = (m[2] ?? "").slice(0, 4).padEnd(4, "0")
   return (m[1] + frac).replace(/^0+(?=\d)/, "")
 }
@@ -32,4 +33,16 @@ export function formatManwon(won: string | null): string {
   const [int, frac] = v.split(".")
   const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
   return frac ? `${grouped}.${frac}` : grouped
+}
+
+/** 사용자가 입력 중인 만원 값 → 입력란 표시 문자열. 숫자·점 외 문자는 버리고, 점은 하나만, 소수는 4자리(=1원)까지.
+ *  정수부는 천단위 콤마, 앞자리 0은 지운다(하나는 남김). 입력 중인 끝의 점·0("1.", "1.50")은 그대로 둔다. */
+export function formatManwonInput(raw: string): string {
+  const s = raw.replace(/[^\d.]/g, "")
+  if (s === "") return ""
+  const dot = s.indexOf(".")
+  const intDigits = (dot < 0 ? s : s.slice(0, dot)).replace(/^0+(?=\d)/, "")
+  const int = (intDigits || "0").replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+  if (dot < 0) return int
+  return `${int}.${s.slice(dot + 1).replace(/\./g, "").slice(0, 4)}`
 }

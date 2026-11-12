@@ -160,3 +160,44 @@ describe("관심 토글 낙관적 반영", () => {
     expect(toast.error).toHaveBeenCalledWith("저장하지 못했습니다")
   })
 })
+
+describe("겹치는 낙관적 변경", () => {
+  const starOf = (name: string) => table().getByText(name).closest("tr")!.querySelector('button[aria-label="관심"] svg')!
+  const starred = (name: string) => (starOf(name).getAttribute("class") ?? "").includes("fill-amber-400")
+  const clickStar = (name: string) => userEvent.click(within(table().getByText(name).closest("tr")!).getByRole("button", { name: "관심" }))
+
+  it("PATCH 가 모두 실패하면 A·B 둘 다 원래대로 돌아가고 오류 토스트가 뜬다", async () => {
+    mount("all", [row(2), row(1)])
+    await screen.findByText("2개")
+    const pending: ((r: Response) => void)[] = []
+    fetchMock.mockImplementation((_url: string, init: RequestInit) => {
+      if (init.method === "PATCH") return new Promise<Response>((r) => pending.push(r))
+      return Promise.resolve(json(200, [row(2), row(1)]))
+    })
+    await clickStar("매물1")
+    await clickStar("매물2")
+    expect(starred("매물1") && starred("매물2")).toBe(true)
+    pending.forEach((r) => r(json(500, { error: "저장하지 못했습니다" })))
+    await waitFor(() => expect(starred("매물1")).toBe(false))
+    await waitFor(() => expect(starred("매물2")).toBe(false))
+    expect(toast.error).toHaveBeenCalledWith("저장하지 못했습니다")
+  })
+
+  it("A 가 성공해도 아직 진행 중인 B 의 낙관적 값은 유지된다", async () => {
+    mount("all", [row(2), row(1)])
+    await screen.findByText("2개")
+    const pending = new Map<string, (r: Response) => void>()
+    fetchMock.mockImplementation((url: string, init: RequestInit) => {
+      if (init.method === "PATCH") return new Promise<Response>((r) => pending.set(url, r))
+      return Promise.resolve(json(200, [row(2), row(1)])) // 서버는 아직 B 를 모른다
+    })
+    await clickStar("매물1")
+    await clickStar("매물2")
+    pending.get("/api/v1/properties/p1")!(new Response(null, { status: 204 }))
+    await new Promise((r) => setTimeout(r, 50))
+    expect(starred("매물2")).toBe(true)
+    expect(fetchMock.mock.calls.filter(([, i]) => (i.method ?? "GET") === "GET")).toHaveLength(1) // 재조회 보류
+    pending.get("/api/v1/properties/p2")!(new Response(null, { status: 204 }))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([, i]) => (i.method ?? "GET") === "GET").length).toBeGreaterThan(1))
+  })
+})

@@ -42,11 +42,11 @@ function display(field: PropertyField, value: ApiValue) {
 
 const cell = (p: PropertyRow, k: string) => (p as unknown as Record<string, ApiValue>)[k]
 
-export function PropertyList({ rows: initial, view }: { rows: PropertyRow[]; view: PropertyView }) {
+const UPDATE_KEY = ["property-update"]
+
+// 낙관적 반영은 쿼리 캐시(["properties", view])에 직접 한다(원본의 로컬 data 상태 대신).
+export function PropertyList({ rows: data, view }: { rows: PropertyRow[]; view: PropertyView }) {
   const qc = useQueryClient()
-  const [data, setData] = useState(initial)
-  const [seen, setSeen] = useState(initial)
-  if (seen !== initial) { setSeen(initial); setData(initial) }
 
   const [sel, setSel] = useState<Set<string>>(new Set())
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -79,23 +79,38 @@ export function PropertyList({ rows: initial, view }: { rows: PropertyRow[]; vie
     void qc.invalidateQueries({ queryKey: ["properties"] })
     if (id) void qc.invalidateQueries({ queryKey: ["property", id] })
   }
+  // 캐시된 모든 목록에서 한 행의 필드를 바꾼다. onlyIf 가 있으면 그 필드가 아직 onlyIf 값일 때만(다른 변경이 덮었으면 둔다).
+  const patchCached = (id: string, values: PropertyInput, onlyIf?: PropertyInput) =>
+    qc.setQueriesData<PropertyRow[]>({ queryKey: ["properties"] }, (list) => list?.map((r) => {
+      if (r.id !== id) return r
+      const next = { ...r } as unknown as Record<string, ApiValue>
+      for (const [k, v] of Object.entries(values)) if (!onlyIf || next[k] === onlyIf[k]) next[k] = v
+      return next as unknown as PropertyRow
+    }))
   const update = useMutation({
+    mutationKey: UPDATE_KEY,
     mutationFn: (v: { id: string; patch: PropertyInput }) => updateProperty(v.id, v.patch),
-    onSuccess: (_r, v) => invalidate(v.id),
+    onMutate: async ({ id, patch }) => {
+      await qc.cancelQueries({ queryKey: ["properties"] })
+      let prev: PropertyInput | undefined
+      for (const [, list] of qc.getQueriesData<PropertyRow[]>({ queryKey: ["properties"] })) {
+        const r = list?.find((x) => x.id === id)
+        if (r) { prev = Object.fromEntries(Object.keys(patch).map((k) => [k, cell(r, k)])); break }
+      }
+      patchCached(id, patch)
+      return { prev }
+    },
+    // 실패하면 이 변경이 바꾼 행·필드만 되돌린다(다른 행의 진행 중인 변경은 건드리지 않음). 오류 토스트는 전역.
+    onError: (_e, { id, patch }, ctx) => { if (ctx?.prev) patchCached(id, ctx.prev, patch) },
+    // 다른 매물 변경이 아직 진행 중이면 재조회를 미룬다(그 변경의 낙관적 값을 덮지 않도록). 자기 자신은 아직 pending 으로 센다.
+    onSettled: (_r, _e, { id }) => { if (qc.isMutating({ mutationKey: UPDATE_KEY }) === 1) invalidate(id) },
   })
   const remove = useMutation({
     mutationFn: (ids: string[]) => deleteProperties(ids),
     onSuccess: () => { toast.success("삭제했습니다"); setSel(new Set()); setConfirmOpen(false); invalidate() },
   })
 
-  // 낙관적 반영 후 저장. 실패하면 바꾼 필드만 이전 값으로 되돌린다.
-  function patchRow(p: PropertyRow, patch: PropertyInput) {
-    const prev = Object.fromEntries(Object.keys(patch).map((k) => [k, cell(p, k)]))
-    setData((d) => d.map((r) => (r.id === p.id ? { ...r, ...patch } as PropertyRow : r)))
-    update.mutate({ id: p.id, patch }, {
-      onError: () => setData((d) => d.map((r) => (r.id === p.id ? { ...r, ...prev } as PropertyRow : r))),
-    })
-  }
+  const patchRow = (p: PropertyRow, patch: PropertyInput) => update.mutate({ id: p.id, patch })
   function saveCell(p: PropertyRow, k: string, raw: string) {
     let v: ApiValue
     try { v = toApiValue(FIELD_BY_KEY[k], raw) } catch (e) { toast.error(e instanceof Error ? e.message : "저장 실패"); return }

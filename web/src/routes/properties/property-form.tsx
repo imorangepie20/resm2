@@ -11,9 +11,9 @@ import { Input } from "@/components/ui/input"
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
-import { FORM_GROUPS, PROPERTY_FIELDS, SPAN_CLASS, formMeta, type PropertyField } from "@/lib/properties/fields"
-import { fromDateInput, groupDigits, stripDigits, formatTel, toDateInput } from "@/lib/properties/format"
-import { wonToManwon } from "@/lib/properties/money"
+import { FIELD_BY_KEY, FORM_GROUPS, PROPERTY_FIELDS, SPAN_CLASS, formMeta, type PropertyField } from "@/lib/properties/fields"
+import { fromDateInput, formatTel, toDateInput } from "@/lib/properties/format"
+import { formatManwonInput, wonToManwon } from "@/lib/properties/money"
 import { buildPropertyBody, createProperty, updateProperty, type ApiValue, type PropertyRow } from "@/lib/properties/api"
 
 const RENTAL = new Set(["B1", "B2"]) // 전세·월세 → price를 "보증금"으로
@@ -25,18 +25,25 @@ export function PropertyForm({ property }: { property?: PropertyRow }) {
     const init: Record<string, string> = {}
     for (const f of PROPERTY_FIELDS) {
       const v = (property as unknown as Record<string, ApiValue> | undefined)?.[f.key]
-      init[f.key] = v == null ? (f.key === "status" ? "진행" : "") : f.type === "bool" ? (v ? "true" : "") : f.type === "money" ? wonToManwon(String(v)) : String(v)
+      init[f.key] = v == null ? (f.key === "status" ? "진행" : "") : f.type === "bool" ? (v ? "true" : "") : f.type === "money" ? formatManwonInput(wonToManwon(String(v))) : String(v)
     }
     return init
   })
-  const set = (k: string, v: string) => setValues((p) => ({ ...p, [k]: v }))
+  // 사용자가 고친 금액 필드. 고치지 않은 금액은 보내지 않는다(저장값을 다시 계산해 바꾸거나, 왕복할 수 없는 값이 저장을 막지 않도록).
+  const [touchedMoney, setTouchedMoney] = useState<Set<string>>(() => new Set())
+  const set = (k: string, v: string) => {
+    setValues((p) => ({ ...p, [k]: v }))
+    if (FIELD_BY_KEY[k].type === "money") setTouchedMoney((t) => (t.has(k) ? t : new Set(t).add(k)))
+  }
 
   const isRental = RENTAL.has(values.tradeType)
 
   // 원본의 서버 액션 → API. 본문은 필드 타입대로 바꿔 보낸다(금액 만원 → 원). 실패 오류는 전역 토스트가 띄운다.
   const save = useMutation({
     mutationFn: async () => {
-      const payload = buildPropertyBody(values)
+      const untouched = PROPERTY_FIELDS.filter((f) => f.type === "money" && !touchedMoney.has(f.key)).map((f) => f.key)
+      const payload = buildPropertyBody({ ...values, ...Object.fromEntries(untouched.map((k) => [k, ""])) })
+      for (const k of untouched) delete payload[k]
       if (property) await updateProperty(property.id, payload)
       else await createProperty(payload)
     },
@@ -120,7 +127,7 @@ function FieldInput({ field, meta, label, value, onChange }: {
         <Input id={field.key} type="tel" inputMode="tel" value={value} onChange={(e) => onChange(formatTel(e.target.value))} placeholder={meta.placeholder} />
       ) : meta.formInput === "money" ? (
         <InputGroup>
-          <InputGroupInput id={field.key} inputMode="numeric" className="text-right tabular-nums" placeholder="0" value={groupDigits(value)} onChange={(e) => onChange(stripDigits(e.target.value))} />
+          <InputGroupInput id={field.key} inputMode="numeric" className="text-right tabular-nums" placeholder="0" value={value} onChange={(e) => onChange(formatManwonInput(e.target.value))} />
           <InputGroupAddon align="inline-end"><InputGroupText>{meta.unit}</InputGroupText></InputGroupAddon>
         </InputGroup>
       ) : meta.formInput === "area" || meta.formInput === "count" ? (
