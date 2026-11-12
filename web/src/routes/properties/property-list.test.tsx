@@ -1,7 +1,7 @@
 import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter } from "react-router"
+import { MemoryRouter, useLocation } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }))
 vi.mock("sonner", () => ({ toast }))
@@ -199,5 +199,78 @@ describe("겹치는 낙관적 변경", () => {
     expect(fetchMock.mock.calls.filter(([, i]) => (i.method ?? "GET") === "GET")).toHaveLength(1) // 재조회 보류
     pending.get("/api/v1/properties/p2")!(new Response(null, { status: 204 }))
     await waitFor(() => expect(fetchMock.mock.calls.filter(([, i]) => (i.method ?? "GET") === "GET").length).toBeGreaterThan(1))
+  })
+})
+
+describe("카드 탭으로 수정 열기 (lg 미만 카드)", () => {
+  // 이동 기록: 경로가 바뀔 때마다 한 번씩 쌓인다.
+  const visits: string[] = []
+  function LocationProbe() {
+    const loc = useLocation()
+    if (visits[visits.length - 1] !== loc.key) visits.push(loc.key)
+    return <div data-testid="path">{loc.pathname}</div>
+  }
+  function mountCards(rows: PropertyRow[]) {
+    visits.length = 0
+    let server = rows // PATCH 를 반영해 재조회에 돌려준다
+    fetchMock.mockImplementation(async (url: string, init: RequestInit) => {
+      if ((init.method ?? "GET") === "GET" && url.startsWith("/api/v1/properties?view=")) return json(200, server)
+      if (init.method === "PATCH") {
+        const id = url.split("/").pop()
+        server = server.map((r) => (r.id === id ? { ...r, ...JSON.parse(init.body as string) } : r))
+        return new Response(null, { status: 204 })
+      }
+      throw new Error(`unexpected ${init.method} ${url}`)
+    })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/properties"]}><PropertyListPage view="all" /><LocationProbe /></MemoryRouter>
+      </QueryClientProvider>,
+    )
+  }
+  // jsdom 은 CSS 를 적용하지 않아 표와 카드가 모두 있다. 표 밖의 이름이 카드다.
+  const card = async (name: string) => {
+    const els = await screen.findAllByText(name)
+    return els.find((el) => !el.closest("table"))!.closest("div.rounded-lg") as HTMLElement
+  }
+  const path = () => screen.getByTestId("path").textContent
+
+  it("카드 본문을 누르면 수정 화면으로 간다", async () => {
+    mountCards([row(1)])
+    await userEvent.click(within(await card("매물1")).getByText("매물1"))
+    expect(path()).toBe("/properties/p1/edit")
+  })
+
+  it("별을 누르면 이동하지 않고 관심만 바뀐다", async () => {
+    mountCards([row(1)])
+    const c = await card("매물1")
+    await userEvent.click(within(c).getByRole("button", { name: "관심" }))
+    expect(path()).toBe("/properties")
+    expect(within(c).getByRole("button", { name: "관심" }).querySelector("svg")!.getAttribute("class")).toContain("fill-amber-400")
+    expect(JSON.parse(fetchMock.mock.calls.find(([, i]) => i.method === "PATCH")![1].body)).toEqual({ isFavorite: true })
+  })
+
+  it("체크박스를 누르면 이동하지 않고 선택만 된다", async () => {
+    mountCards([row(1)])
+    const c = await card("매물1")
+    await userEvent.click(within(c).getByRole("checkbox", { name: "선택" }))
+    expect(path()).toBe("/properties")
+    expect(screen.getByRole("button", { name: /^삭제 1/ })).toBeTruthy()
+  })
+
+  it("색상 태그를 누르면 이동하지 않는다", async () => {
+    mountCards([row(1)])
+    const c = await card("매물1")
+    await userEvent.click(within(c).getByRole("button", { name: "색상 태그" }))
+    expect(path()).toBe("/properties")
+  })
+
+  it("카드의 수정 링크는 한 번만 이동한다", async () => {
+    mountCards([row(1)])
+    const c = await card("매물1")
+    const before = visits.length
+    await userEvent.click(within(c).getByRole("link", { name: /수정/ }))
+    expect(path()).toBe("/properties/p1/edit")
+    expect(visits.length - before).toBe(1)
   })
 })

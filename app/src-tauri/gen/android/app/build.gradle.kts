@@ -25,6 +25,22 @@ android {
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
+    // 배포 키: gen/android/keystore.properties(git 무시)가 있으면 그 키로 release 서명한다.
+    // 키: storeFile(gen/android 기준 경로), storePassword, keyAlias, keyPassword
+    val keystorePropertiesFile = rootProject.file("keystore.properties")
+    if (keystorePropertiesFile.exists()) {
+        val keystoreProperties = Properties().apply {
+            keystorePropertiesFile.inputStream().use { load(it) }
+        }
+        signingConfigs {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
     buildTypes {
         getByName("debug") {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
@@ -39,8 +55,8 @@ android {
             }
         }
         getByName("release") {
-            // 1단계: 배포용 키가 없으므로 디버그 키로 서명한다(설치 확인용). 평문 HTTP 는 release 라 허용 안 됨.
-            signingConfig = signingConfigs.getByName("debug")
+            // keystore.properties 가 없으면 디버그 키로 서명한다(설치 확인용, 배포 금지). 평문 HTTP 는 release 라 허용 안 됨.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             optimization {
                enable = true
             }

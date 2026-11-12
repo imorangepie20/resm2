@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Plus, Star, Trash2, Pencil, Search, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
@@ -47,6 +47,7 @@ const UPDATE_KEY = ["property-update"]
 // 낙관적 반영은 쿼리 캐시(["properties", view])에 직접 한다(원본의 로컬 data 상태 대신).
 export function PropertyList({ rows: data, view }: { rows: PropertyRow[]; view: PropertyView }) {
   const qc = useQueryClient()
+  const navigate = useNavigate()
 
   const [sel, setSel] = useState<Set<string>>(new Set())
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -245,7 +246,17 @@ export function PropertyList({ rows: data, view }: { rows: PropertyRow[]; view: 
               const rowColor = view === "all" && p.colorTag ? COLOR_TAG_MAP[p.colorTag]?.row : undefined
               const cname = String(p.customerName ?? "")
               return (
-                <div key={p.id} className={cn("flex flex-col gap-2 rounded-lg border p-3", rowColor, sel.has(p.id) && "ring-2 ring-primary")}>
+                // 카드 본문을 누르면 수정 화면. 안쪽 컨트롤(체크박스·별·색상·수정 링크)과 텍스트 선택은 제외한다.
+                // 키보드 경로는 안쪽 "수정" 링크가 맡는다(카드 전체를 버튼으로 만들지 않음).
+                <div
+                  key={p.id}
+                  onClick={(e) => {
+                    if ((e.target as Element).closest("a,button,input,label,select,textarea,[role=checkbox],[role=menuitem],[data-no-card-nav]")) return
+                    if (window.getSelection()?.toString()) return
+                    navigate(`/properties/${p.id}/edit`)
+                  }}
+                  className={cn("flex cursor-pointer flex-col gap-2 rounded-lg border p-3", rowColor, sel.has(p.id) && "ring-2 ring-primary")}
+                >
                   <div className="flex items-start gap-2">
                     <Checkbox checked={sel.has(p.id)} onCheckedChange={(c) => toggleOne(p.id, c)} aria-label="선택" className="mt-1" />
                     <div className="min-w-0 flex-1">

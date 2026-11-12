@@ -2,5 +2,7 @@
     <!-- Base application theme. -->
     <style name="Theme.resm_app" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
+        <!-- 상태바·내비게이션 바 뒤로 보이는 창 배경. web/src/globals.css 의 CSS 변수 background(:root) = oklch(1 0 0) 를 sRGB 로 옮긴 값(XML 주석에는 하이픈 두 개를 못 씀) -->
+        <item name="android:windowBackground">#FFFFFFFF</item>
     </style>
 </resources>
