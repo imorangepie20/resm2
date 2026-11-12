@@ -12,3 +12,6 @@ app/src-tauri/gen/android/**/build/
 test-results/
 playwright-report/
 .superpowers/
+
+# 배포 env (실값 포함)
+infra/resm.env

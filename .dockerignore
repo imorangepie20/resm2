@@ -1,0 +1,26 @@
+# 빌드 컨텍스트에서 제외 (비밀·산출물·대용량)
+.git
+.github
+.vscode
+.superpowers
+.claude
+.codex
+.env
+.env.*
+!.env.example
+target
+**/target
+node_modules
+**/node_modules
+dist
+**/dist
+web/test-results
+web/playwright-report
+app/src-tauri/gen
+app/src-tauri/target
+docs
+infra/resm.env
+infra/*.env
+!infra/resm.env.example
+*.keystore
+*.md

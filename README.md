@@ -140,3 +140,4 @@ pnpm build:web && pnpm test:e2e  # 브라우저 E2E (Playwright)
 - 2026-11-12: 앱 origin 을 `https://tauri.localhost` 로 바꿔 우편번호 검색 창이 처음부터 https 로 열린다. CSP 에 `base-uri`·`form-action` 을 추가하고 style-src 를 Tauri 가 바꾸지 않게 고정했다.
 - 2026-11-12: Android 앱이 폰·태블릿 에뮬레이터에서 동작한다. 가입(우편번호 검색)·로그인 유지·매물 카드/표·등록/수정/삭제·서버 불통 화면을 확인했고, 상태바·내비게이션 바·키보드가 화면을 가리지 않는다. `pnpm app:android:dev`(로컬 서버, `adb reverse`)와 `pnpm app:build:android`(운영 주소 APK)를 추가했다.
 - 2026-11-12: 폰 카드 목록에서 카드를 누르면 수정 화면이 열린다(체크박스·별·색상·수정 링크는 각자 동작만). Android 시스템 바 영역이 페이지 배경색(라이트 흰색·다크 #0A0A0A)이 되고 키보드 처리를 보강했으며, release APK 는 `keystore.properties` 가 있으면 그 키로, 없으면 디버그 키로 서명한다.
+- 2026-11-12: Zorin 배포 구성(`infra/Dockerfile`, `infra/compose.zorin.yml`, 배포·롤백 절차 `infra/README.md`)을 추가했다. 이미지 빌드·컨테이너 기동·health·Origin 규칙·쿠키 속성을 로컬에서 확인했다. 아직 Zorin 에 배포하지 않았다.
