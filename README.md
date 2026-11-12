@@ -6,7 +6,7 @@
 
 ```
 resm/
-├── Cargo.toml            # cargo workspace (server, 이후 app/src-tauri)
+├── Cargo.toml            # cargo workspace (server, app/src-tauri)
 ├── pnpm-workspace.yaml   # web, app
 ├── server/               # axum API 서버
 ├── web/                  # React SPA
@@ -16,7 +16,7 @@ resm/
 └── README.md
 ```
 
-`server/`, `web/`(화면 뼈대까지) 를 만들었다.
+`server/`, `web/`, `app/`, `infra/`(배포 구성) 를 만들었다.
 
 ## 기술 스택
 
@@ -26,7 +26,7 @@ resm/
 
 ## 실행 방법
 
-서버·화면·앱이 만들어지면 여기에 적는다. 환경변수 목록은 `.env.example` 참고.
+아래 절차대로 실행한다. 환경변수 목록은 `.env.example` 참고.
 
 ### 개발 DB (서버 테스트용)
 

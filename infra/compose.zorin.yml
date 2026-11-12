@@ -38,6 +38,7 @@ services:
       resources:
         limits:
           memory: 256M
+          cpus: "1.0" # 로그인 폭주(bcrypt)가 같은 호스트의 운영 앱·DB 를 굶기지 않게
     logging:
       driver: local
       options:

@@ -101,6 +101,32 @@ describe("PropertyList 검색·필터·페이징", () => {
   })
 })
 
+describe("선택 삭제 범위", () => {
+  const search = () => screen.getByPlaceholderText("매물명·단지·주소·고객 검색")
+
+  it("검색으로 선택한 행이 가려지면 선택이 풀리고, 검색을 지워도 돌아오지 않는다", async () => {
+    mount("all", [row(2), row(1)])
+    await screen.findByText("2개")
+    await userEvent.click(within(table().getByText("매물1").closest("tr")!).getByRole("checkbox", { name: "선택" }))
+    expect(screen.getByRole("button", { name: /^삭제 1/ })).toBeTruthy()
+
+    await userEvent.type(search(), "매물2")
+    expect(screen.queryByRole("button", { name: /^삭제/ })).toBeNull()
+    await userEvent.clear(search())
+    expect(screen.getByText("2개")).toBeTruthy()
+    expect(screen.queryByRole("button", { name: /^삭제/ })).toBeNull()
+  })
+
+  it("같은 결과의 페이지를 넘겨도 선택은 유지된다", async () => {
+    mount("all", Array.from({ length: 51 }, (_, i) => row(51 - i)))
+    await screen.findByText("51개")
+    await userEvent.click(within(table().getByText("매물51").closest("tr")!).getByRole("checkbox", { name: "선택" }))
+    await userEvent.click(screen.getByRole("button", { name: /다음/ }))
+    expect(pageInfo()).toBe("2 / 2")
+    expect(screen.getByRole("button", { name: /^삭제 1/ })).toBeTruthy()
+  }, 20000)
+})
+
 describe("인라인 편집", () => {
   it("더블클릭 → 입력 → Enter 저장(만원 입력은 원으로), Esc 는 취소", async () => {
     mount("all", [row(1)])

@@ -72,6 +72,8 @@ export function PropertyList({ rows: data, view }: { rows: PropertyRow[]; view: 
   const paged = rows.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE)
   const allSelected = paged.length > 0 && paged.every((p) => sel.has(p.id))
   const someSelected = paged.some((p) => sel.has(p.id)) && !allSelected
+  // 검색·필터가 바뀌면 1페이지로 돌아가고 선택도 비운다(보이지 않는 행이 선택 삭제에 섞이지 않게).
+  const resetView = () => { setPage(0); setSel(new Set()) }
   const toggleAll = (c: boolean) => setSel(c ? new Set(paged.map((p) => p.id)) : new Set())
   const toggleOne = (id: string, c: boolean) => setSel((prev) => { const next = new Set(prev); if (c) next.add(id); else next.delete(id); return next })
 
@@ -130,7 +132,7 @@ export function PropertyList({ rows: data, view }: { rows: PropertyRow[]; view: 
               <div className="flex items-center gap-1.5" role="group" aria-label="색상 필터">
                 {COLOR_TAGS.map((c) => (
                   <button key={c.value} type="button" title={`${c.label} 필터`} aria-pressed={fColor === c.value}
-                    onClick={() => { setFColor(fColor === c.value ? null : c.value); setPage(0) }}
+                    onClick={() => { setFColor(fColor === c.value ? null : c.value); resetView() }}
                     className={cn("size-4 rounded-full transition", c.dot, fColor === c.value ? "ring-2 ring-foreground/50 ring-offset-1" : "opacity-50 hover:opacity-100")} />
                 ))}
               </div>
@@ -139,16 +141,16 @@ export function PropertyList({ rows: data, view }: { rows: PropertyRow[]; view: 
           <div className="flex flex-wrap items-center gap-2">
           <div className="relative max-sm:flex-1">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input value={q} onChange={(e) => { setQ(e.target.value); setPage(0) }} placeholder="매물명·단지·주소·고객 검색" className="w-full pl-8 sm:w-52" />
+            <Input value={q} onChange={(e) => { setQ(e.target.value); resetView() }} placeholder="매물명·단지·주소·고객 검색" className="w-full pl-8 sm:w-52" />
           </div>
-          <Select value={fType} onValueChange={(v) => { if (v != null) { setFType(v); setPage(0) } }}>
+          <Select value={fType} onValueChange={(v) => { if (v != null) { setFType(v); resetView() } }}>
             <SelectTrigger className="h-8"><SelectValue>{fType === "ALL" ? "매물유형 전체" : PROPERTY_LABEL[fType] ?? fType}</SelectValue></SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">매물유형 전체</SelectItem>
               {PROPERTY_OPTIONS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={fTrade} onValueChange={(v) => { if (v != null) { setFTrade(v); setPage(0) } }}>
+          <Select value={fTrade} onValueChange={(v) => { if (v != null) { setFTrade(v); resetView() } }}>
             <SelectTrigger className="h-8"><SelectValue>{fTrade === "ALL" ? "거래유형 전체" : TRADE_LABEL[fTrade] ?? fTrade}</SelectValue></SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">거래유형 전체</SelectItem>
@@ -156,7 +158,7 @@ export function PropertyList({ rows: data, view }: { rows: PropertyRow[]; view: 
             </SelectContent>
           </Select>
           {view !== "contracted" && view !== "in-progress" && (
-            <Select value={fStatus} onValueChange={(v) => { if (v != null) { setFStatus(v); setPage(0) } }}>
+            <Select value={fStatus} onValueChange={(v) => { if (v != null) { setFStatus(v); resetView() } }}>
               <SelectTrigger className="h-8"><SelectValue>{fStatus === "ALL" ? "상태 전체" : fStatus}</SelectValue></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">상태 전체</SelectItem>

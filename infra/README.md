@@ -32,6 +32,40 @@ resm Rust 서버(`resm-server`)를 기존 `real-es` 운영 스택 옆에 **별�
 - `real-es/infra/secrets/app.env` 를 읽을 수 있다(비밀번호 출처).
 - `resm-server` 라는 컨테이너가 없다(`docker ps -a --filter name=resm-server`).
 - 시작 전 기준 상태를 적어 둔다: `docker ps --format '{{.Names}} {{.Status}}'`, `curl -i https://resm.approid.team/api/health`, `free -h`, `nproc`.
+- **스키마 일치 확인(읽기 전용)**: 운영 DB 에 적용된 마이그레이션이 이 서버의 테스트가 기반한 목록과 같은지 첫 기동 전에 본다. 기존 스택의 postgres 컨테이너 안에서 컨테이너 환경변수(`REAL_ES_MIGRATION_USER`, `POSTGRES_DB`)를 그대로 쓰므로 비밀번호를 입력·출력하지 않는다(컨테이너 안 로컬 소켓 접속).
+
+  ```sh
+  docker exec "$(docker ps -q --filter label=com.docker.compose.project=real-es --filter label=com.docker.compose.service=postgres)"     sh -c 'psql -U "$REAL_ES_MIGRATION_USER" -d "$POSTGRES_DB" -At -c "SELECT migration_name FROM _prisma_migrations ORDER BY started_at, migration_name"'
+  ```
+
+  `real-es/prisma/migrations` 기준으로 아래 22개가 같은 순서로 나와야 한다.
+
+  ```
+20260623004428_init_agency
+20260623031510_init_auth
+20260623061711_init_legal_division
+20260623063116_init_complex_article
+20260623090005_complex_coords
+20260623215848_add_property_type
+20260624054035_add_favorite
+20260624111441_add_property
+20260624231004_add_property_name
+20260625103221_add_contract_workflow
+20260625131133_add_property_address
+20260625173209_add_realprice_cache
+20260625222306_add_customer
+20260626061319_add_event
+20260626113712_add_customer_zipcode
+20260626225446_add_property_party
+20260627031904_add_property_color_tag
+20260627195103_add_agency_user_contact
+20260627200042_add_agency_zipcode
+20260701053331_add_system_config
+20260703002615_add_notification
+20260703014754_add_user_address
+  ```
+
+  다르면(빠졌거나 더 있으면) **새 서버를 시작하지 말고** 차이를 소유자에게 보고한다.
 - 모든 compose 명령에 `-p resm-rust` 를 붙인다. 셸에 `COMPOSE_PROJECT_NAME=real-es` 가 남아 있으면 파일의 `name:` 보다 우선해 기존 스택을 건드릴 수 있다.
 
 ## 배포 절차
@@ -71,7 +105,7 @@ resm Rust 서버(`resm-server`)를 기존 `real-es` 운영 스택 옆에 **별�
 | `DATABASE_URL` | `postgresql://real_es_app:<URL인코딩 비밀번호>@postgres:5432/real_es` | backend 망 안의 `postgres` 호스트. 비밀은 파일에만 |
 | `RESM_BIND` | `0.0.0.0:3104` | 컨테이너 안에서 호스트 포트 매핑·터널이 닿도록 |
 | `RESM_COOKIE_SECURE` | `true` | 공개 주소가 https |
-| `RESM_ALLOWED_ORIGINS` | `https://tauri.localhost,http://tauri.localhost` | Windows 앱·Android WebView 의 Origin(CORS 와 Origin 검사). 브라우저의 `https://resm2.approid.team` 은 Origin 과 Host 가 같으므로(`server/src/http.rs` `origin_check`) 넣지 않아도 된다 |
+| `RESM_ALLOWED_ORIGINS` | `https://tauri.localhost` | Windows 앱·Android WebView 의 Origin(`useHttpsScheme` 라 둘 다 https)(CORS 와 Origin 검사). 브라우저의 `https://resm2.approid.team` 은 Origin 과 Host 가 같으므로(`server/src/http.rs` `origin_check`) 넣지 않아도 된다 |
 | `RESM_STATIC_DIR` | `/srv/resm/web` | 이미지에 복사된 `web/dist` |
 
 ## 배포 후 확인 목록
@@ -87,6 +121,7 @@ resm Rust 서버(`resm-server`)를 기존 `real-es` 운영 스택 옆에 **별�
 9. 앱 origin 의 OPTIONS preflight 가 Cloudflare 를 통과한다:
    `curl -i -X OPTIONS https://resm2.approid.team/api/v1/auth/login -H 'Origin: https://tauri.localhost' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type,authorization'` → 200 과 `access-control-allow-origin: https://tauri.localhost`.
 10. 쿠키: 서버는 `session` 쿠키를 `Path=/; HttpOnly; SameSite=Lax; Secure` 로 내리고 `Domain` 속성이 없다(`server/src/auth/handlers.rs`). 따라서 호스트 전용 쿠키이며 `resm.` 과 `resm2.` 사이에 **공유되지 않는다**. 두 주소에서 각각 로그인해야 한다. 세션 행은 같은 DB `Session` 테이블이고 토큰 해시 방식이 같으므로, 어느 서버가 발급한 토큰이든 두 서버 모두 DB 로 검증한다(Bearer 로는 상호 호환). 쿠키 이름이 같아도 호스트가 달라 충돌하지 않는다.
+11. **권장(소유자 작업, Cloudflare 대시보드)**: 서버 자체에는 요청 제한(rate limiting)이 없으므로 `/api/v1/auth/*` 에 Cloudflare rate-limiting 규칙을 건다(로그인·가입 폭주 방어).
 
 ## Host / Origin 동작
 
@@ -115,6 +150,6 @@ Origin 검사는 `Authorization` 없는 상태 변경 요청에서 `Origin` 의 
 - 서버는 SIGTERM 핸들러가 없다. compose 의 `init: true`(tini) 덕에 `docker stop` 이 1초 안에 끝난다. `docker run` 으로 직접 실행할 때는 `--init` 을 붙인다.
 - 배포 전 DB 백업은 하지 않는다(현재 운영 데이터는 가상 데이터라는 소유자 결정, 설계 §5.6). 실데이터가 들어오면 첫 쓰기 전에 `pg_dump` 를 먼저 한다.
 - 로컬 DB 와 운영 DB 의 데이터는 다르다. 로컬 검증은 임시 계정을 만들었다.
-- 컨테이너 메모리 상한 256M, 로그 10MB x 3 회전.
+- 컨테이너 메모리 상한 256M, CPU 상한 1.0코어, 로그 10MB x 3 회전.
 - Windows 설치본은 코드 서명이 없고 자동 업데이트가 없다.
 - 이미지는 Zorin 에서 빌드한다(레지스트리 없음). 호스트 아키텍처가 로컬(amd64)과 다르면 처음부터 다시 빌드된다.
