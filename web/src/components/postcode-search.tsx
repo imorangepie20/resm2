@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Search } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -33,7 +34,11 @@ function loadScript(): Promise<void> {
     s.src = SCRIPT_SRC
     s.async = true
     s.onload = () => resolve()
-    s.onerror = () => reject(new Error("우편번호 스크립트 로드 실패"))
+    s.onerror = () => {
+      // 실패한 태그가 남으면 재시도 때 영영 끝나지 않는 리스너만 붙으므로 떼어 낸다.
+      s.remove()
+      reject(new Error("우편번호 스크립트 로드 실패"))
+    }
     document.body.appendChild(s)
   })
 }
@@ -50,7 +55,7 @@ export function PostcodeSearch({ onComplete, className }: { onComplete: (r: { zo
       await loadScript()
       setOpen(true)
     } catch {
-      // 로드 실패 시 무시 — 주소 직접 입력으로 진행
+      toast.error("주소 검색을 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.")
     } finally {
       setBusy(false)
     }

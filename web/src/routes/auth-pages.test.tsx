@@ -3,6 +3,9 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, useLocation } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+const toastError = vi.hoisted(() => vi.fn())
+vi.mock("sonner", () => ({ toast: { error: toastError } }))
+
 import { queryClient } from "@/lib/query-client"
 import { setOnUnauthorized } from "@/lib/api"
 import { LoginPage } from "./login"
@@ -31,6 +34,7 @@ function mount(ui: React.ReactElement, path: string) {
 }
 
 beforeEach(() => {
+  toastError.mockReset()
   vi.stubGlobal("fetch", fetchMock)
   fetchMock.mockReset()
 })
@@ -53,6 +57,7 @@ describe("LoginPage", () => {
     expect(await screen.findAllByText("이메일 또는 비밀번호가 올바르지 않습니다")).toHaveLength(1)
     expect(screen.getByTestId("where").textContent).toBe("/login")
     expect(onUnauthorized).not.toHaveBeenCalled()
+    expect(toastError).not.toHaveBeenCalled()
     expect(screen.queryByText("비밀번호 찾기")).toBeNull()
   })
 })
@@ -105,6 +110,7 @@ describe("RegisterPage", () => {
     await userEvent.click(screen.getByRole("checkbox"))
     await userEvent.click(screen.getByRole("button", { name: "가입하기" }))
     expect(await screen.findAllByText("비밀번호가 일치하지 않습니다")).toHaveLength(1)
+    expect(toastError).not.toHaveBeenCalled()
     expect(screen.getByTestId("where").textContent).toBe("/register")
   })
 })
