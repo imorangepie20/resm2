@@ -1,9 +1,12 @@
 pub mod auth;
 pub mod config;
 pub mod error;
+pub mod http;
+pub mod notify;
 
 use std::sync::Arc;
 
+use axum::middleware::from_fn;
 use axum::routing::get;
 use axum::{Json, Router, extract::State};
 use sqlx::PgPool;
@@ -30,12 +33,15 @@ async fn api_not_found() -> ApiError {
 fn api_v1() -> Router<AppState> {
     Router::new()
         .route("/health", get(health))
+        .merge(auth::handlers::routes())
         .fallback(api_not_found)
+        .layer(from_fn(http::origin_check))
 }
 
 pub fn build_router(state: AppState) -> Router {
+    let cors = http::cors_layer(&state.cfg);
     Router::new()
-        .nest("/api/v1", api_v1())
+        .nest("/api/v1", api_v1().layer(cors))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

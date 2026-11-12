@@ -7,6 +7,8 @@ use serde_json::json;
 pub enum ApiError {
     BadRequest(String),
     Unauthorized,
+    /// 401 이지만 문구가 다른 경우(로그인 실패 등).
+    UnauthorizedWith(&'static str),
     Forbidden,
     NotFound,
     Internal(anyhow::Error),
@@ -19,6 +21,7 @@ impl IntoResponse for ApiError {
         let (status, message) = match self {
             ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg),
             ApiError::Unauthorized => (StatusCode::UNAUTHORIZED, "인증이 필요합니다".to_string()),
+            ApiError::UnauthorizedWith(msg) => (StatusCode::UNAUTHORIZED, msg.to_string()),
             ApiError::Forbidden => (StatusCode::FORBIDDEN, "권한이 없습니다".to_string()),
             ApiError::NotFound => (StatusCode::NOT_FOUND, "찾을 수 없습니다".to_string()),
             ApiError::Internal(err) => {

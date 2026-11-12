@@ -28,7 +28,7 @@ pub async fn spawn_app() -> TestApp {
     let cfg = Config {
         database_url: url,
         bind: listener.local_addr().unwrap(),
-        allowed_origins: vec![],
+        allowed_origins: vec!["http://tauri.localhost".to_string()],
         cookie_secure: false,
         static_dir: None,
     };
