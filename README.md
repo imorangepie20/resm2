@@ -81,6 +81,25 @@ pnpm app:build:win  # 운영 주소(resm2.approid.team)로 NSIS 설치본: targe
 
 - 앱 빌드는 `web/dist` 를 앱 모드(`vite build --mode tauri-prod`)로 덮어쓴다. 브라우저 화면은 실행 시점에 `/api/v1` 을 쓰므로 그대로 서버가 제공해도 동작하지만, 헷갈리지 않게 브라우저용은 `pnpm build:web` 으로 다시 빌드한다.
 
+### Android 앱 (Tauri)
+
+전제: Android Studio·SDK·NDK, Rust Android 타깃, 에뮬레이터(AVD `resm_phone_api36`·`resm_tablet_api36`)가 설치돼 있고 Windows 개발자 모드가 켜져 있다(`.so` 심볼릭 링크). `adb` 는 `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe`.
+
+```bash
+pnpm dev:server                       # 서버는 따로 먼저 띄운다
+emulator -avd resm_phone_api36        # 에뮬레이터 부팅 (-no-boot-anim 은 쓰지 않는다)
+adb reverse tcp:3104 tcp:3104         # 에뮬레이터의 127.0.0.1:3104 → PC 의 로컬 서버
+pnpm app:android:dev                  # 에뮬레이터에 설치·실행, 로컬 서버(127.0.0.1:3104)에 붙는다 (web/.env.tauri-dev)
+pnpm app:build:android                # 운영 주소(resm2.approid.team)용 APK (디버그 키 서명)
+```
+
+- 로컬 서버 연결은 `adb reverse` 로 한다. 앱 화면은 `https://tauri.localhost` 라서 `http://10.0.2.2:3104` 같은 평문 주소는 혼합 콘텐츠로 막히고, `127.0.0.1` 은 허용된다(실측). `RESM_ALLOWED_ORIGINS` 에 추가할 값은 없다(`app:android:dev` 도 origin 이 `https://tauri.localhost`).
+- `app:android:dev` 는 Vite 를 `127.0.0.1:5173` 에 띄우고 `adb reverse tcp:5173` 은 Tauri 가 직접 건다. 에뮬레이터를 `-no-boot-anim` 으로 띄우면 Tauri 가 부팅 완료를 못 알아채 빌드 뒤 설치 단계에서 멈춘다.
+- 평문 HTTP 는 디버그 빌드에서만 허용된다(Tauri 기본값). `app:build:android` 는 release 빌드라 평문을 허용하지 않고, 배포 키가 아직 없어 디버그 키로 서명한다. 결과물: `app/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk` (arm64-v8a·armeabi-v7a·x86·x86_64 포함).
+- 로컬 서버에 붙는 패키지 APK 가 필요하면 Windows 앱과 같은 방식으로 `--config` 덮어쓰기(before 명령 `--mode tauri-dev`, CSP `connect-src` 에 `http://127.0.0.1:3104`)를 주고 `pnpm --dir app tauri android build --debug --apk --target x86_64` 로 만든다.
+- 상태바·내비게이션 바·키보드 영역은 `MainActivity.kt` 가 화면 바깥 여백으로 처리한다(웹 CSS 변경 없음).
+- Android 빌드도 `web/dist` 를 앱 모드로 덮어쓴다(위 Windows 와 같음).
+
 ### 테스트 3종
 
 ```bash
@@ -117,3 +136,4 @@ pnpm build:web && pnpm test:e2e  # 브라우저 E2E (Playwright)
 - 2026-11-12: 서버가 `web/dist` 를 제공한다(`RESM_STATIC_DIR`). 새로고침·딥링크는 SPA 로, 없는 `/api/...` 는 JSON 404 로 응답하고 `assets/` 는 영구 캐시된다. Playwright 브라우저 E2E(가입 → 매물 등록·수정·삭제 → 로그아웃, 모바일 카드)를 테스트 DB 로 실행하고 README 에 개발 실행법을 정리했다.
 - 2026-11-12: Windows 앱이 실제 화면(`web/`)을 띄운다. 로그인 토큰을 앱 저장소에 보관해 껐다 켜도 로그인이 유지되고, 우편번호 검색·매물 등록/수정/삭제·서버 불통 화면과 다시 시도가 앱에서 동작한다. CSP 를 켰고 `pnpm app:build:win` 으로 운영 주소용 NSIS 설치본을 만든다.
 - 2026-11-12: 앱 origin 을 `https://tauri.localhost` 로 바꿔 우편번호 검색 창이 처음부터 https 로 열린다. CSP 에 `base-uri`·`form-action` 을 추가하고 style-src 를 Tauri 가 바꾸지 않게 고정했다.
+- 2026-11-12: Android 앱이 폰·태블릿 에뮬레이터에서 동작한다. 가입(우편번호 검색)·로그인 유지·매물 카드/표·등록/수정/삭제·서버 불통 화면을 확인했고, 상태바·내비게이션 바·키보드가 화면을 가리지 않는다. `pnpm app:android:dev`(로컬 서버, `adb reverse`)와 `pnpm app:build:android`(운영 주소 APK)를 추가했다.

@@ -17,6 +17,9 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       strictPort: true,
+      // `tauri android dev --host 127.0.0.1` 이 넘겨 준다(adb reverse 로 에뮬레이터가 붙는 주소). 평소엔 기본값.
+      host: process.env.TAURI_DEV_HOST || undefined,
+      hmr: process.env.TAURI_DEV_HOST ? { protocol: "ws", host: process.env.TAURI_DEV_HOST, clientPort: 5173 } : undefined,
       proxy: { "/api": "http://127.0.0.1:3104" },
     },
     build: {

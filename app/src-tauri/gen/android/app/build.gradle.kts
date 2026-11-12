@@ -39,6 +39,8 @@ android {
             }
         }
         getByName("release") {
+            // 1단계: 배포용 키가 없으므로 디버그 키로 서명한다(설치 확인용). 평문 HTTP 는 release 라 허용 안 됨.
+            signingConfig = signingConfigs.getByName("debug")
             optimization {
                enable = true
             }

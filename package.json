@@ -9,6 +9,8 @@
     "dev:server": "cargo run -p resm-server",
     "test:e2e": "pnpm --dir web test:e2e",
     "app:dev": "pnpm --dir app tauri dev",
-    "app:build:win": "pnpm --dir app tauri build"
+    "app:build:win": "pnpm --dir app tauri build",
+    "app:android:dev": "pnpm --dir app tauri android dev --host 127.0.0.1",
+    "app:build:android": "pnpm --dir app tauri android build --apk"
   }
 }
