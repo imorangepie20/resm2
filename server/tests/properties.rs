@@ -406,3 +406,16 @@ async fn unknown_keys_ignored_wrong_types_400() {
     let v: Value = resp.json().await.unwrap();
     assert_eq!(v["error"], "요청 형식이 올바르지 않습니다");
 }
+
+#[tokio::test]
+async fn created_at_is_utc_now() {
+    let app = common::spawn_app().await;
+    let (token, _) = common::signup(&app).await;
+    let id = create(&app, &token, json!({ "name": "시각" })).await;
+    let (_, p) = get(&app, &token, &id).await;
+    let s = p["createdAt"].as_str().unwrap();
+    assert!(s.ends_with('Z'));
+    let at = chrono::DateTime::parse_from_rfc3339(s).unwrap();
+    let diff = (chrono::Utc::now() - at.with_timezone(&chrono::Utc)).num_seconds();
+    assert!(diff.abs() < 60, "{s}");
+}

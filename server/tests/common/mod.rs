@@ -6,7 +6,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use resm_server::{AppState, Config, build_router};
 use sqlx::PgPool;
-use sqlx::postgres::PgPoolOptions;
 
 pub struct TestApp {
     pub addr: String,
@@ -17,9 +16,7 @@ pub struct TestApp {
 pub async fn spawn_app() -> TestApp {
     let _ = dotenvy::from_path(concat!(env!("CARGO_MANIFEST_DIR"), "/../.env"));
     let url = std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL 이 필요합니다");
-    let db = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&url)
+    let db = resm_server::db::connect(&url)
         .await
         .expect("테스트 DB 접속 실패");
 

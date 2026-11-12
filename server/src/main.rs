@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use resm_server::{AppState, Config, build_router};
-use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
@@ -15,10 +14,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let cfg = Config::from_env()?;
-    let db = PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&cfg.database_url)
-        .await?;
+    let db = resm_server::db::connect(&cfg.database_url).await?;
     let listener = tokio::net::TcpListener::bind(cfg.bind).await?;
     tracing::info!("listening on {}", listener.local_addr()?);
 

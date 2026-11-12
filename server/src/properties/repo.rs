@@ -55,8 +55,9 @@ pub async fn insert(
     changes: Vec<(&'static str, Val)>,
 ) -> sqlx::Result<String> {
     let id = cuid2::create_id();
-    let mut qb =
-        QueryBuilder::new(r#"INSERT INTO "Property" ("id", "userId", "source", "updatedAt""#);
+    let mut qb = QueryBuilder::new(
+        r#"INSERT INTO "Property" ("id", "userId", "source", "createdAt", "updatedAt""#,
+    );
     for (col, _) in &changes {
         qb.push(", \"").push(*col).push("\"");
     }
@@ -64,7 +65,7 @@ pub async fn insert(
     qb.push_bind(id.clone());
     qb.push(", ").push_bind(user_id.to_string());
     qb.push(", ").push_bind(source.to_string());
-    qb.push(", now() at time zone 'utc'");
+    qb.push(", now() at time zone 'utc', now() at time zone 'utc'");
     for (_, val) in changes {
         qb.push(", ");
         push_val(&mut qb, val);
