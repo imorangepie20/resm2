@@ -455,3 +455,55 @@ async fn preflight_allows_configured_origin() {
         .unwrap();
     assert!(resp.headers().get("access-control-allow-origin").is_none());
 }
+
+#[tokio::test]
+async fn login_from_allowed_origin_without_bearer_is_200() {
+    let app = common::spawn_app().await;
+    let email = common::unique_email();
+    common::insert_user(&app.db, &email, "abcd1234").await;
+    let resp = app
+        .client
+        .post(format!("{}/api/v1/auth/login", app.addr))
+        .header("Origin", "http://tauri.localhost")
+        .json(&json!({"email": email, "password": "abcd1234"}))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), 200);
+    let body: Value = resp.json().await.unwrap();
+    assert!(body["token"].is_string());
+}
+
+#[tokio::test]
+async fn signup_from_allowed_origin_without_bearer_is_200() {
+    let app = common::spawn_app().await;
+    let resp = app
+        .client
+        .post(format!("{}/api/v1/auth/signup", app.addr))
+        .header("Origin", "http://tauri.localhost")
+        .json(&signup_body(&common::unique_email(), "허용출처"))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), 200);
+    let body: Value = resp.json().await.unwrap();
+    assert!(body["token"].is_string());
+}
+
+#[tokio::test]
+async fn post_from_unlisted_origin_without_bearer_is_403() {
+    let app = common::spawn_app().await;
+    let email = common::unique_email();
+    common::insert_user(&app.db, &email, "abcd1234").await;
+    let resp = app
+        .client
+        .post(format!("{}/api/v1/auth/login", app.addr))
+        .header("Origin", "https://evil.example")
+        .json(&json!({"email": email, "password": "abcd1234"}))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), 403);
+    let v: Value = resp.json().await.unwrap();
+    assert_eq!(v["error"], "권한이 없습니다");
+}
