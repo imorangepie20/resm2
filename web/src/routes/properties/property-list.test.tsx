@@ -90,7 +90,7 @@ describe("PropertyList 검색·필터·페이징", () => {
     await userEvent.click(await screen.findByRole("option", { name: "계약완료" }))
     expect(screen.getByText("0개")).toBeTruthy()
     expect(screen.getByText("매물이 없습니다")).toBeTruthy()
-  })
+  }, 20000) // 60행 렌더 + 글자 입력이라 기본 5초에 걸칠 수 있다
 
   it("계약진행·계약완료 뷰는 상태 필터와 새 매물 버튼이 없고, 관심 뷰도 새 매물 버튼이 없다", async () => {
     mount("in-progress", [row(1, { status: "계약진행" })])
@@ -263,6 +263,26 @@ describe("카드 탭으로 수정 열기 (lg 미만 카드)", () => {
     const c = await card("매물1")
     await userEvent.click(within(c).getByRole("button", { name: "색상 태그" }))
     expect(path()).toBe("/properties")
+  })
+
+  it("색상 팝오버 안의 빈 곳을 눌러도 이동하지 않는다", async () => {
+    mountCards([row(1)])
+    const c = await card("매물1")
+    await userEvent.click(within(c).getByRole("button", { name: "색상 태그" }))
+    const popup = (await screen.findByTitle("없음")).closest('[data-slot="popover-content"]') as HTMLElement
+    await userEvent.click(popup)
+    expect(path()).toBe("/properties")
+  })
+
+  it("색상 팝오버가 열린 채 카드 본문을 누르면 팝오버만 닫히고 이동하지 않는다", async () => {
+    mountCards([row(1)])
+    const c = await card("매물1")
+    await userEvent.click(within(c).getByRole("button", { name: "색상 태그" }))
+    await screen.findByTitle("없음")
+    await userEvent.click(within(c).getByText("매물1"))
+    expect(path()).toBe("/properties")
+    await userEvent.click(within(c).getByText("매물1"))
+    expect(path()).toBe("/properties/p1/edit")
   })
 
   it("카드의 수정 링크는 한 번만 이동한다", async () => {

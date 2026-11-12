@@ -250,7 +250,14 @@ export function PropertyList({ rows: data, view }: { rows: PropertyRow[]; view: 
                 // 키보드 경로는 안쪽 "수정" 링크가 맡는다(카드 전체를 버튼으로 만들지 않음).
                 <div
                   key={p.id}
+                  // 팝오버가 열린 채 누른 탭은 팝오버를 닫는 데만 쓴다(누르는 순간의 상태를 기억).
+                  onPointerDownCapture={(e) => {
+                    e.currentTarget.dataset.popoverOpen = document.querySelector('[data-slot="popover-content"]') ? "1" : ""
+                  }}
                   onClick={(e) => {
+                    // 포털(색상 팝오버)에서 올라온 클릭은 카드 것이 아니다.
+                    if (!e.currentTarget.contains(e.target as Node)) return
+                    if (e.currentTarget.dataset.popoverOpen) return
                     if ((e.target as Element).closest("a,button,input,label,select,textarea,[role=checkbox],[role=menuitem],[data-no-card-nav]")) return
                     if (window.getSelection()?.toString()) return
                     navigate(`/properties/${p.id}/edit`)
