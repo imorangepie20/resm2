@@ -16,7 +16,7 @@ resm/
 └── README.md
 ```
 
-`server/` 는 만들었고, `web/` 는 이후 작업에서 만든다.
+`server/`, `web/`(화면 뼈대까지) 를 만들었다.
 
 ## 기술 스택
 
@@ -52,6 +52,15 @@ cargo run -p resm-server          # 127.0.0.1:3104
 cargo test -p resm-server        # TEST_DATABASE_URL 필요
 ```
 
+### 웹 (React SPA)
+
+```bash
+pnpm install
+pnpm dev:web      # http://localhost:5173 (/api 는 127.0.0.1:3104 로 프록시, 서버를 같이 띄운다)
+pnpm test:web     # vitest
+pnpm build:web    # web/dist
+```
+
 ## 로드맵
 
 | 단계 | 내용 | 비고 |
@@ -70,3 +79,4 @@ cargo test -p resm-server        # TEST_DATABASE_URL 필요
 - 2026-11-12: 서버 인증 코어를 추가했다. 원본 bcryptjs 해시(cost 12)를 그대로 검증하고, 세션 토큰(32바이트 base64url, DB에는 SHA-256 hex)·`CurrentUser` 추출기(Bearer 우선, 없으면 `session` 쿠키)가 기존 Next.js 앱의 `Session` 행과 호환된다.
 - 2026-11-12: 서버 인증 API를 추가했다. 가입·로그인·로그아웃·me API(`/api/v1/auth/*`), 가입 시 superadmin 알림, CORS·쿠키 인증 Origin 검사를 추가했다. 원본 bcryptjs 계정으로 로그인되고 발급 세션의 `tokenHash` 가 원본 계산과 일치함을 확인했다.
 - 2026-11-12: 서버 매물 API를 추가했다. 목록(view: all·favorites·in-progress·contracted)·단건·등록·부분 수정(PATCH, null=비움)·일괄 삭제(`/api/v1/properties*`)가 본인 매물만 대상으로 동작하고, 금액(price·rentPrice)은 원 단위 십진 문자열로 주고받으며 등록 시 superadmin 알림이 생성된다.
+- 2026-11-12: `web/` React SPA 뼈대를 추가했다. 원본 `ui` 프리미티브·사이드바·헤더·푸터·테마 토글을 그대로 옮기고, API 클라이언트(쿠키/Bearer 겸용)와 인증 가드(비로그인 → `/login`, 로그인 → `/properties`)를 갖췄다. 서버에 닿지 않으면 "서버에 연결할 수 없습니다" 화면과 다시 시도 버튼이 나온다. 로그인·가입·매물 화면은 자리 표시 상태다.
