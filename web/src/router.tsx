@@ -1,7 +1,9 @@
 import { createBrowserRouter, Navigate } from "react-router"
 import { RedirectIfAuthed, RequireAuth } from "@/lib/auth"
 import { ShellLayout } from "@/components/layout/shell-layout"
-import { Placeholder } from "@/routes/placeholder"
+import { PropertyListPage } from "@/routes/properties/list-page"
+import { NewPropertyPage } from "@/routes/properties/new-page"
+import { EditPropertyPage } from "@/routes/properties/edit-page"
 import { NotFound } from "@/routes/not-found"
 import { AuthLayout } from "@/routes/auth-layout"
 import { LoginPage } from "@/routes/login"
@@ -31,12 +33,13 @@ export const router = createBrowserRouter([
       {
         element: <ShellLayout />,
         children: [
-          { path: "/properties", element: <Placeholder name="/properties" /> },
-          { path: "/properties/favorites", element: <Placeholder name="/properties/favorites" /> },
-          { path: "/properties/progress", element: <Placeholder name="/properties/progress" /> },
-          { path: "/properties/contracted", element: <Placeholder name="/properties/contracted" /> },
-          { path: "/properties/new", element: <Placeholder name="/properties/new" /> },
-          { path: "/properties/:id/edit", element: <Placeholder name="/properties/:id/edit" /> },
+          // key: 같은 컴포넌트를 쓰는 4개 경로 사이를 오갈 때 원본(경로별 페이지)처럼 검색·필터 상태를 새로 시작한다.
+          { path: "/properties", element: <PropertyListPage key="all" view="all" /> },
+          { path: "/properties/favorites", element: <PropertyListPage key="favorites" view="favorites" /> },
+          { path: "/properties/progress", element: <PropertyListPage key="in-progress" view="in-progress" /> },
+          { path: "/properties/contracted", element: <PropertyListPage key="contracted" view="contracted" /> },
+          { path: "/properties/new", element: <NewPropertyPage /> },
+          { path: "/properties/:id/edit", element: <EditPropertyPage /> },
         ],
       },
     ],
