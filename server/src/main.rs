@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use resm_server::{AppState, Config, build_router};
+use resm_server::{AppState, Config, build_router, FormsState};
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
@@ -21,6 +21,7 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState {
         db,
         cfg: Arc::new(cfg),
+        forms: FormsState::new(),
     };
     axum::serve(listener, build_router(state)).await?;
     Ok(())

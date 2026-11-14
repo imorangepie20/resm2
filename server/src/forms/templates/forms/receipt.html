@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>영 수 증</h1>
+<p class="subtitle">실무 보조용 서식 — 공식 표준양식 아님</p>
+
+<div class="mt-8">
+  <table class="receipt-table w-full border-collapse border-2 border-black">
+    <tbody>
+      <tr>
+        <th class="w-28 border border-black bg-gray-100 px-3 py-3 text-center font-semibold">금 액</th>
+        <td class="border border-black px-3 py-3 text-lg">
+          金 {% if p.price %}<span class="fill-medium">{{ p.price | won }}</span>{% else %}<span class="fill-medium"></span>{% endif %} 원정
+          {% if p.price %}<span class="text-gray-600">(₩{{ p.price | won }})</span>{% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th class="border border-black bg-gray-100 px-3 py-3 text-center font-semibold">부동산 표시</th>
+        <td class="border border-black px-3 py-3"><span class="fill-wide">{{ p.address | default("") }}</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="my-6 text-center text-[13px]">위 금액을 부동산 거래대금으로 정히 영수합니다.</p>
+  {{ dt_line::date_line() }}
+  <div class="mt-2 text-right">영수인&nbsp;&nbsp;<span class="fill-short">{{ p.customerName | default("") }}</span> <span class="ml-1 text-gray-500">(인)</span></div>
+</div>
+{% endblock %}

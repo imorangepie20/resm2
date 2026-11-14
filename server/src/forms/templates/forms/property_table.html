@@ -1,0 +1,33 @@
+{% macro property_table(p) %}
+<table class="border-collapse border border-black">
+  <tbody>
+    <tr>
+      <th class="w-24 border border-black bg-gray-100 px-2 py-2 text-center font-semibold">소재지</th>
+      <td class="border border-black px-2 py-2" colspan="5">
+        <span class="fill-wide">{{ p.address | default("") }}</span>
+        {% if p.complexName %}<span class="ml-2 text-gray-600">({{ p.complexName }})</span>{% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">토 지</th>
+      <td class="w-16 border border-black bg-gray-50 px-2 py-2 text-center">지목</td>
+      <td class="border border-black px-2 py-2"><span class="fill"></span></td>
+      <td class="w-16 border border-black bg-gray-50 px-2 py-2 text-center">대지면적</td>
+      <td class="border border-black px-2 py-2" colspan="2">
+        {% if p.landArea %}<span class="fill-medium">{{ p.landArea }} ㎡</span>{% else %}<span class="fill-medium"></span>{% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">건 물</th>
+      <td class="border border-black bg-gray-50 px-2 py-2 text-center">구조·용도</td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium">{{ p.realEstateType | default("") }}</span></td>
+      <td class="border border-black bg-gray-50 px-2 py-2 text-center">면적</td>
+      <td class="border border-black px-2 py-2" colspan="2">
+        전용 {% if p.areaExclusive %}<span class="fill-short">{{ p.areaExclusive }}㎡</span>{% else %}<span class="fill-short"></span>{% endif %}
+        <span class="mx-2 text-gray-400">/</span>
+        공급 {% if p.areaSupply %}<span class="fill-short">{{ p.areaSupply }}㎡</span>{% else %}<span class="fill-short"></span>{% endif %}
+      </td>
+    </tr>
+  </tbody>
+</table>
+{% endmacro %}

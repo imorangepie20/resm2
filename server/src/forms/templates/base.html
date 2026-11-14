@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {
+      size: 210mm 297mm;
+      margin: 18mm 14mm;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Noto Serif KR', 'Noto Serif', 'Malgun Gothic', 'Apple SD Gothic Neo', serif; font-size: 13px; line-height: 1.6; color: #000; }
+    .page { width: 210mm; min-height: 297mm; padding: 16mm 18mm; margin: 0 auto; background: white; }
+    h1 { text-align: center; font-size: 28px; font-weight: 700; letter-spacing: 0.4em; margin: 0 0 8px; }
+    .subtitle { text-align: center; font-size: 11px; letter-spacing: 0.1em; color: #666; margin-bottom: 24px; }
+    .section { margin-top: 16px; }
+    .section h2 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 12px; }
+    th, td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
+    th { background: #f5f5f5; font-weight: 700; text-align: center; }
+    .fill { display: inline-block; border-bottom: 1px dotted #999; min-width: 100%; vertical-align: bottom; }
+    .fill-short { display: inline-block; border-bottom: 1px dotted #999; min-width: 40%; vertical-align: bottom; }
+    .fill-medium { display: inline-block; border-bottom: 1px dotted #999; min-width: 55%; vertical-align: bottom; }
+    .fill-wide { display: inline-block; border-bottom: 1px dotted #999; min-width: 80%; vertical-align: bottom; }
+    .text-gray { color: #999; }
+    .text-gray-600 { color: #666; }
+    .text-gray-700 { color: #444; }
+    .bg-gray { background: #f5f5f5; }
+    .bg-gray-light { background: #fafafa; }
+    .amount-table th { width: 60px; }
+    .amount-table td:nth-child(2) { width: 50%; }
+    .amount-table td:nth-child(3) { width: 42%; }
+    .signatures th { width: 70px; }
+    .signatures td:nth-child(2) { width: 40px; }
+    .signatures td:nth-child(3) { width: 28%; }
+    .signatures td:nth-child(4) { width: 40px; }
+    .signatures td:nth-child(5) { width: auto; }
+    .receipt-table { border: 2px solid #000; }
+    .receipt-table th { width: 100px; }
+    .articles { font-size: 12px; line-height: 1.8; }
+    .articles li { margin-bottom: 6px; }
+    .articles li strong { font-weight: 700; }
+    .special-terms { min-height: 72px; border: 1px solid #000; padding: 8px; line-height: 1.9; color: #999; }
+    .special-terms div { border-bottom: 1px dotted #ccc; }
+    .special-terms div:last-child { border-bottom: none; }
+    .date-line { text-align: center; margin: 20px 0; letter-spacing: 0.5em; }
+    .mt-8 { margin-top: 32px; }
+    .mt-2 { margin-top: 8px; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .ml-1 { margin-left: 4px; }
+    .ml-2 { margin-left: 8px; }
+    .mx-2 { margin-left: 8px; margin-right: 8px; }
+    .w-24 { width: 96px; }
+    .w-16 { width: 64px; }
+    .w-32 { width: 128px; }
+    .w-28 { width: 112px; }
+    .w-12 { width: 48px; }
+    .w-20 { width: 80px; }
+    .w-[25%] { width: 25%; }
+    .w-[28%] { width: 28%; }
+    .w-[42%] { width: 42%; }
+    .w-[50%] { width: 50%; }
+    .w-[40%] { width: 40%; }
+    .w-80p { width: 80%; }
+    .w-55p { width: 55%; }
+    .w-45p { width: 45%; }
+    .w-30p { width: 30%; }
+    .colspan-2 { grid-column: span 2; }
+    .colspan-3 { grid-column: span 3; }
+    .colspan-5 { grid-column: span 5; }
+    .align-bottom { vertical-align: bottom; }
+    .inline-block { display: inline-block; }
+    .leading-relaxed { line-height: 1.8; }
+    .space-y-1-5 > * + * { margin-top: 6px; }
+    .text-\[11px\] { font-size: 11px; }
+    .text-\[12px\] { font-size: 12px; }
+    .text-\[13px\] { font-size: 13px; }
+    .text-\[14px\] { font-size: 14px; }
+    .text-lg { font-size: 16px; }
+    .font-semibold { font-weight: 600; }
+    .font-bold { font-weight: 700; }
+    .tracking-widest { letter-spacing: 0.5em; }
+    .tracking-wide { letter-spacing: 0.1em; }
+    .tracking-\[0\.4em\] { letter-spacing: 0.4em; }
+    .py-2 { padding-top: 8px; padding-bottom: 8px; }
+    .px-2 { padding-left: 8px; padding-right: 8px; }
+    .px-3 { padding-left: 12px; padding-right: 12px; }
+    .py-3 { padding-top: 12px; padding-bottom: 12px; }
+    .p-2 { padding: 8px; }
+    .mb-1 { margin-bottom: 4px; }
+    .mb-1-5 { margin-bottom: 6px; }
+    .mb-3 { margin-bottom: 12px; }
+    .mb-4 { margin-bottom: 16px; }
+    .mb-5 { margin-bottom: 20px; }
+    .mb-6 { margin-bottom: 24px; }
+    .my-5 { margin-top: 20px; margin-bottom: 20px; }
+    .my-6 { margin-top: 24px; margin-bottom: 24px; }
+    .mt-1 { margin-top: 4px; }
+    .mt-4 { margin-top: 16px; }
+    .mt-5 { margin-top: 20px; }
+    .mt-6 { margin-top: 24px; }
+    .leading-\[1\.9\] { line-height: 1.9; }
+    .leading-\[2\] { line-height: 2; }
+    .min-h-\[72px\] { min-height: 72px; }
+    .min-w-\[100\%\] { min-width: 100%; }
+    .border { border: 1px solid #000; }
+    .border-2 { border: 2px solid #000; }
+    .border-b { border-bottom: 1px solid #000; }
+    .border-dotted { border-style: dotted; }
+    .border-gray-300 { border-color: #ddd; }
+    .border-gray-500 { border-color: #999; }
+    .border-black { border-color: #000; }
+    .border-collapse { border-collapse: collapse; }
+    .bg-white { background: white; }
+    .bg-gray-100 { background: #f5f5f5; }
+    .bg-gray-50 { background: #f9fafb; }
+    .text-black { color: #000; }
+    .text-gray-400 { color: #999; }
+    .text-gray-500 { color: #999; }
+    .text-gray-600 { color: #666; }
+    .last\:border-0:last-child { border: none; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

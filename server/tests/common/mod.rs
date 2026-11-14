@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use resm_server::{AppState, Config, build_router};
+use resm_server::{AppState, Config, build_router, FormsState};
 use sqlx::PgPool;
 
 pub struct TestApp {
@@ -36,6 +36,7 @@ pub async fn spawn_app_with_static(static_dir: Option<std::path::PathBuf>) -> Te
     let state = AppState {
         db: db.clone(),
         cfg: Arc::new(cfg),
+        forms: FormsState::new(),
     };
     tokio::spawn(async move {
         axum::serve(listener, build_router(state)).await.unwrap();

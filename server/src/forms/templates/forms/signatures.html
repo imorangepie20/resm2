@@ -1,0 +1,26 @@
+{% macro signatures(roles) %}
+<table class="signatures w-full border-collapse border border-black text-[11px]">
+  <tbody>
+    {% for role in roles %}
+    <tr>
+      <th class="w-20 border border-black bg-gray-100 px-2 py-2 text-center font-semibold">{{ role.label }}</th>
+      <td class="w-12 border border-black bg-gray-50 px-1 py-2 text-center">주소</td>
+      <td class="border border-black px-2 py-2" colspan="3"><span class="fill"></span></td>
+    </tr>
+    {% endfor %}
+    <tr style="height: 0;"><td class="border-0 p-0" colspan="5" /></tr>
+    {% for role in roles %}
+    <tr>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">{{ role.label }}</th>
+      <td class="border border-black bg-gray-50 px-1 py-2 text-center">주민번호</td>
+      <td class="w-[28%] border border-black px-2 py-2"><span class="fill"></span></td>
+      <td class="w-12 border border-black bg-gray-50 px-1 py-2 text-center">성명</td>
+      <td class="border border-black px-2 py-2">
+        {% if role.name %}<span class="fill-medium">{{ role.name }}</span>{% else %}<span class="fill-medium"></span>{% endif %}
+        <span class="ml-1 text-gray-500">(인)</span>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}

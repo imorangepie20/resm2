@@ -1,0 +1,14 @@
+{% macro amount_row(label, amount, note="") %}
+<tr>
+  <th class="w-24 border border-black bg-gray-100 px-2 py-2 text-center font-semibold">{{ label }}</th>
+  <td class="border border-black px-2 py-2">
+    金 {% if amount %}<span class="fill-medium">{{ amount }}</span>{% else %}<span class="fill-medium"></span>{% endif %} 원정
+    {% if amount %}
+      <span class="text-gray-600">(₩{{ amount }})</span>
+    {% else %}
+      <span class="text-gray-500">(₩&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span>
+    {% endif %}
+  </td>
+  <td class="w-[42%] border border-black px-2 py-2 text-gray-700">{{ note | safe }}</td>
+</tr>
+{% endmacro %}

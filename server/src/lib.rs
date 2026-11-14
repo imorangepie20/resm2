@@ -3,6 +3,7 @@ pub mod config;
 pub mod contract;
 pub mod db;
 pub mod error;
+pub mod forms;
 pub mod http;
 pub mod notify;
 pub mod properties;
@@ -18,11 +19,13 @@ use tower_http::trace::TraceLayer;
 
 pub use config::Config;
 pub use error::{ApiError, ApiResult};
+pub use forms::handlers::FormsState;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
     pub cfg: Arc<Config>,
+    pub forms: FormsState,
 }
 
 async fn health(State(state): State<AppState>) -> ApiResult<Json<serde_json::Value>> {
@@ -40,8 +43,10 @@ fn api_v1(state: AppState) -> Router<AppState> {
         .merge(auth::handlers::routes())
         .merge(properties::handlers::routes())
         .merge(contract::handlers::routes())
+        .merge(crate::forms::handlers::routes())
         .fallback(api_not_found)
-        .layer(from_fn_with_state(state, http::origin_check))
+        .layer(from_fn_with_state(state.clone(), http::origin_check))
+        .with_state(state)
 }
 
 pub fn build_router(state: AppState) -> Router {

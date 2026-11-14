@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>중개대상물 확인·설명서 [비주거용]</h1>
+<p class="subtitle">비주거용 · 실무 보조용 서식 — 공식 표준양식 아님</p>
+
+<table class="w-full border-collapse border border-black text-[12px]">
+  <tbody>
+    <tr>
+      <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">소재지</th>
+      <td class="border border-black px-2 py-2"><span class="fill-wide">{{ p.address | default("") }}</span></td>
+    </tr>
+    <tr>
+      <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">대상물건 종류</th>
+      <td class="border border-black px-2 py-2"><span class="fill-medium">{{ p.realEstateType | default("") }}</span></td>
+    </tr>
+    <tr>
+      <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">면적</th>
+      <td class="border border-black px-2 py-2">
+        전용 {% if p.areaExclusive %}<span class="fill-short">{{ p.areaExclusive }}㎡</span>{% else %}<span class="fill-short"></span>{% endif %}
+        / 공급 {% if p.areaSupply %}<span class="fill-short">{{ p.areaSupply }}㎡</span>{% else %}<span class="fill-short"></span>{% endif %}
+        / 대지 {% if p.landArea %}<span class="fill-short">{{ p.landArea }}㎡</span>{% else %}<span class="fill-short"></span>{% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">용도지역</th>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span> (수기 기입)</td>
+    </tr>
+    <tr>
+      <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">이용현황</th>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span> (수기 기입)</td>
+    </tr>
+    <tr>
+      <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">권리관계 (소유권·근저당 등)</th>
+      <td class="border border-black px-2 py-2"><span class="fill"></span></td>
+    </tr>
+    <tr>
+      <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">실제 권리관계 또는 공시되지 않은 물건의 권리</th>
+      <td class="border border-black px-2 py-2"><span class="fill"></span></td>
+    </tr>
+    <tr>
+      <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">입지조건 (도로·교통·교육 등)</th>
+      <td class="border border-black px-2 py-2"><span class="fill"></span></td>
+    </tr>
+    <tr>
+      <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">관리에 관한 사항 (관리비·주차)</th>
+      <td class="border border-black px-2 py-2">
+        {% if p.parkingCount %}<span class="fill-medium">주차 {{ p.parkingCount }}대</span>{% else %}<span class="fill-medium"></span>{% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">거래예정금액</th>
+      <td class="border border-black px-2 py-2"><span class="fill-medium">{{ p.price | won }}</span></td>
+    </tr>
+    <tr>
+      <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">중개보수</th>
+      <td class="border border-black px-2 py-2"><span class="fill"></span></td>
+    </tr>
+  </tbody>
+</table>
+{% endblock %}
