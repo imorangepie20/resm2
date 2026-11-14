@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { groupDigits, stripDigits, formatTel, toDateInput, fromDateInput } from "./format";
+import { groupDigits, stripDigits, formatTel, toDateInput, fromDateInput, formatYmd } from "./format";
 
 describe("format", () => {
   it("groupDigits", () => {
@@ -19,5 +19,10 @@ describe("format", () => {
     expect(toDateInput("20030808")).toBe("2003-08-08");
     expect(toDateInput("미정")).toBe("");
     expect(fromDateInput("2003-08-08")).toBe("20030808");
+  });
+  it("formatYmd", () => {
+    expect(formatYmd("20261115")).toBe("11월 15일");
+    expect(formatYmd("20260101")).toBe("1월 1일");
+    expect(formatYmd("20261231")).toBe("12월 31일");
   });
 });

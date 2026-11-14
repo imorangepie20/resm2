@@ -30,3 +30,10 @@ export function toDateInput(s: string): string {
 export function fromDateInput(s: string): string {
   return String(s).replace(/[^\d]/g, "");
 }
+
+/** YYYYMMDD → "M월 D일" (캘린더 헤더용). */
+export function formatYmd(value: string): string {
+  const m = Number(value.slice(4, 6));
+  const d = Number(value.slice(6, 8));
+  return `${m}월 ${d}일`;
+}
