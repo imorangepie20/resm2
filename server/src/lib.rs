@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod config;
+pub mod contract;
 pub mod db;
 pub mod error;
 pub mod http;
@@ -38,6 +39,7 @@ fn api_v1(state: AppState) -> Router<AppState> {
         .route("/health", get(health))
         .merge(auth::handlers::routes())
         .merge(properties::handlers::routes())
+        .merge(contract::handlers::routes())
         .fallback(api_not_found)
         .layer(from_fn_with_state(state, http::origin_check))
 }
