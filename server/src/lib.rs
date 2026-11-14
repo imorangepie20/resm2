@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod config;
 pub mod contract;
+pub mod customers;
 pub mod db;
 pub mod error;
 pub mod forms;
@@ -44,6 +45,7 @@ fn api_v1(state: AppState) -> Router<AppState> {
         .merge(properties::handlers::routes())
         .merge(contract::handlers::routes())
         .merge(crate::forms::handlers::routes())
+        .merge(crate::customers::handlers::routes())
         .fallback(api_not_found)
         .layer(from_fn_with_state(state.clone(), http::origin_check))
         .with_state(state)
