@@ -75,6 +75,7 @@ where
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, ApiError> {
         let state = AppState::from_ref(state);
         let token = token_from_headers(&parts.headers)?;
+        tracing::info!(token_len = token.len(), "auth: token extracted");
         let row: Option<Row> = sqlx::query_as(
             r#"SELECT s."id" AS session_id, s."expiresAt" AS expires_at,
                       u."id", u."agencyId" AS agency_id, u."email", u."name", u."role"
@@ -84,6 +85,7 @@ where
         .bind(hash_token(&token))
         .fetch_optional(&state.db)
         .await?;
+        tracing::info!(found = row.is_some(), "auth: session lookup");
         let row = row.ok_or(ApiError::Unauthorized)?;
         if row.expires_at < Utc::now().naive_utc() {
             sqlx::query(r#"DELETE FROM "Session" WHERE "id" = $1"#)
@@ -92,6 +94,7 @@ where
                 .await?;
             return Err(ApiError::Unauthorized);
         }
+        tracing::info!(user_id = %row.id, "auth: user found");
         Ok(CurrentUser {
             id: row.id,
             agency_id: row.agency_id,

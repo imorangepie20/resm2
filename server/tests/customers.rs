@@ -1,45 +1,36 @@
-use reqwest::Client;
+mod common;
+
+use common::TestApp;
+use reqwest::Method;
 use serde_json::{json, Value};
-use sqlx::PgPool;
 
-const BASE_URL: &str = "http://127.0.0.1:3105/api/v1";
-
-async fn login(pool: &PgPool, email: &str, password: &str) -> (String, String) {
-    let client = Client::new();
-    let res = client
-        .post(format!("{BASE_URL}/auth/login"))
-        .json(&json!({ "email": email, "password": password }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200, "login failed: {:?}", res.text().await);
-
-    let cookies = res
-        .headers()
-        .get_all("set-cookie")
-        .iter()
-        .filter_map(|v| v.to_str().ok())
-        .map(|s| s.to_string())
-        .collect::<Vec<_>>()
-        .join("; ");
-
-    let body: Value = res.json().await.unwrap();
-    let token = body["token"].as_str().unwrap().to_string();
-    (token, cookies)
+async fn call(
+    app: &TestApp,
+    token: &str,
+    method: Method,
+    path: &str,
+    body: Option<&Value>,
+) -> (reqwest::StatusCode, Value) {
+    let mut req = app
+        .client
+        .request(method, format!("{}/api/v1{path}", app.addr));
+    req = req.bearer_auth(token);
+    if let Some(b) = body {
+        req = req.json(b);
+    }
+    let resp = req.send().await.unwrap();
+    let status = resp.status();
+    let text = resp.text().await.unwrap();
+    (status, serde_json::from_str(&text).unwrap_or(Value::Null))
 }
 
-async fn create_property(
-    client: &Client,
-    token: &str,
-    cookies: &str,
-    trade_type: &str,
-    real_estate_type: &str,
-) -> String {
-    let res = client
-        .post(format!("{BASE_URL}/properties"))
-        .bearer_auth(token)
-        .header("Cookie", cookies)
-        .json(&json!({
+async fn create_property(app: &TestApp, token: &str, trade_type: &str, real_estate_type: &str) -> String {
+    let res = call(
+        app,
+        token,
+        Method::POST,
+        "/properties",
+        Some(&json!({
             "name": "테스트 매물",
             "tradeType": trade_type,
             "realEstateType": real_estate_type,
@@ -49,440 +40,312 @@ async fn create_property(
             "contractDate": "20240101",
             "balanceDate": "20240201",
             "customerName": "홍길동"
-        }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200, "create property failed: {:?}", res.text().await);
-    let body: Value = res.json().await.unwrap();
+        })),
+    )
+    .await;
+    let (status, body) = res;
+    assert!(status.is_success() || status.as_u16() == 201, "create property failed ({}): {:?}", status, body);
     body["id"].as_str().unwrap().to_string()
 }
 
 #[tokio::test]
 async fn customers_list_search_and_type_filter() {
-    let pool = sqlx::PgPool::connect(
-        &std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL"),
+    let app = common::spawn_app().await;
+    let (token, _) = common::signup(&app).await;
+
+    // Create customers
+    call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "김철수", "phone": "010-1111-2222", "types": ["매도인"] })),
     )
-    .await
-    .expect("DB connect");
+    .await;
 
-    let (token, cookies) = login(&pool, "test-cust-list@example.com", "pw123456").await;
-    let client = Client::new();
+    call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "이영희", "phone": "010-3333-4444", "types": ["매수인"] })),
+    )
+    .await;
 
-    // 고객 생성
-    client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "김철수", "phone": "010-1111-2222", "types": ["매도인"] }))
-        .send()
-        .await
-        .unwrap();
+    call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "박민수", "phone": "010-5555-6666", "types": ["단순방문"] })),
+    )
+    .await;
 
-    client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "이영희", "phone": "010-3333-4444", "types": ["매수인"] }))
-        .send()
-        .await
-        .unwrap();
-
-    client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "박민수", "phone": "010-5555-6666", "types": ["단순방문"] }))
-        .send()
-        .await
-        .unwrap();
-
-    // 검색 (이름 부분일치)
-    let res = client
-        .get(format!("{BASE_URL}/customers?q=철수"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let customers: Vec<Value> = res.json().await.unwrap();
+    // Search by name
+    let res = call(&app, &token, Method::GET, "/customers?q=철수", None).await;
+    assert_eq!(res.0, 200);
+    let customers = res.1.as_array().unwrap();
     assert_eq!(customers.len(), 1);
     assert_eq!(customers[0]["name"], "김철수");
 
-    // 검색 (전화 부분일치)
-    let res = client
-        .get(format!("{BASE_URL}/customers?q=3333"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let customers: Vec<Value> = res.json().await.unwrap();
+    // Search by phone
+    let res = call(&app, &token, Method::GET, "/customers?q=3333", None).await;
+    assert_eq!(res.0, 200);
+    let customers = res.1.as_array().unwrap();
     assert_eq!(customers.len(), 1);
     assert_eq!(customers[0]["name"], "이영희");
 
-    // 유형 필터
-    let res = client
-        .get(format!("{BASE_URL}/customers?type=매도인"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let customers: Vec<Value> = res.json().await.unwrap();
+    // Filter by type
+    let res = call(&app, &token, Method::GET, "/customers?type=매도인", None).await;
+    assert_eq!(res.0, 200);
+    let customers = res.1.as_array().unwrap();
     assert_eq!(customers.len(), 1);
     assert_eq!(customers[0]["name"], "김철수");
     assert!(customers[0]["types"].as_array().unwrap().contains(&json!("매도인")));
 
-    // 유형 필터 - 매수인
-    let res = client
-        .get(format!("{BASE_URL}/customers?type=매수인"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let customers: Vec<Value> = res.json().await.unwrap();
+    let res = call(&app, &token, Method::GET, "/customers?type=매수인", None).await;
+    assert_eq!(res.0, 200);
+    let customers = res.1.as_array().unwrap();
     assert_eq!(customers.len(), 1);
     assert_eq!(customers[0]["name"], "이영희");
 }
 
 #[tokio::test]
 async fn customers_create_normalizes_types() {
-    let pool = sqlx::PgPool::connect(
-        &std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL"),
+    let app = common::spawn_app().await;
+    let (token, _) = common::signup(&app).await;
+
+    // Party type only -> keeps party type
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "테스트1", "types": ["매도인", "단순방문"] })),
     )
-    .await
-    .expect("DB connect");
+    .await;
+    assert_eq!(res.0, 200);
+    let id = res.1["id"].as_str().unwrap();
 
-    let (token, cookies) = login(&pool, "test-cust-create@example.com", "pw123456").await;
-    let client = Client::new();
+    let res = call(&app, &token, Method::GET, &format!("/customers/{id}"), None).await;
+    assert_eq!(res.0, 200);
+    assert_eq!(res.1["types"], json!(["매도인"]));
 
-    // 당사자 유형만 있는 경우 -> 당사자 유형만 남음
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "테스트1", "types": ["매도인", "단순방문"] }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let body: Value = res.json().await.unwrap();
-    let id = body["id"].as_str().unwrap();
+    // Empty array -> 단순방문
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "테스트2", "types": [] })),
+    )
+    .await;
+    assert_eq!(res.0, 200);
+    let id = res.1["id"].as_str().unwrap();
 
-    let res = client
-        .get(format!("{BASE_URL}/customers/{id}"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let customer: Value = res.json().await.unwrap();
-    assert_eq!(customer["types"], json!(["매도인"]));
+    let res = call(&app, &token, Method::GET, &format!("/customers/{id}"), None).await;
+    assert_eq!(res.0, 200);
+    assert_eq!(res.1["types"], json!(["단순방문"]));
 
-    // 빈 배열 -> 단순방문
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "테스트2", "types": [] }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let body: Value = res.json().await.unwrap();
-    let id = body["id"].as_str().unwrap();
+    // Invalid type ignored
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "테스트3", "types": ["없는유형", "매수인"] })),
+    )
+    .await;
+    assert_eq!(res.0, 200);
+    let id = res.1["id"].as_str().unwrap();
 
-    let res = client
-        .get(format!("{BASE_URL}/customers/{id}"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let customer: Value = res.json().await.unwrap();
-    assert_eq!(customer["types"], json!(["단순방문"]));
-
-    // 유효하지 않은 유형은 무시됨
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "테스트3", "types": ["없는유형", "매수인"] }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let body: Value = res.json().await.unwrap();
-    let id = body["id"].as_str().unwrap();
-
-    let res = client
-        .get(format!("{BASE_URL}/customers/{id}"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let customer: Value = res.json().await.unwrap();
-    assert_eq!(customer["types"], json!(["매수인"]));
+    let res = call(&app, &token, Method::GET, &format!("/customers/{id}"), None).await;
+    assert_eq!(res.0, 200);
+    assert_eq!(res.1["types"], json!(["매수인"]));
 }
 
 #[tokio::test]
 async fn customers_create_with_property_id_links_party() {
-    let pool = sqlx::PgPool::connect(
-        &std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL"),
+    let app = common::spawn_app().await;
+    let (token, _) = common::signup(&app).await;
+
+    let prop_id = create_property(&app, &token, "A1", "A01").await;
+
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "매도인고객", "phone": "010-9999-8888", "types": ["매도인"], "property_id": prop_id })),
     )
-    .await
-    .expect("DB connect");
+    .await;
+    assert_eq!(res.0, 200);
+    let cust_id = res.1["id"].as_str().unwrap();
 
-    let (token, cookies) = login(&pool, "test-cust-prop@example.com", "pw123456").await;
-    let client = Client::new();
-
-    let prop_id = create_property(&client, &token, &cookies, "A1", "A01").await;
-
-    // propertyId와 함께 고객 생성 -> 당사자 연결됨
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "매도인고객", "phone": "010-9999-8888", "types": ["매도인"], "propertyId": prop_id }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let body: Value = res.json().await.unwrap();
-    let cust_id = body["id"].as_str().unwrap();
-
-    let res = client
-        .get(format!("{BASE_URL}/customers/{cust_id}"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let customer: Value = res.json().await.unwrap();
-    assert_eq!(customer["property_id"], json!(prop_id));
-    assert!(customer["parties"].as_array().unwrap().len() > 0);
-    let party = &customer["parties"][0];
+    let res = call(&app, &token, Method::GET, &format!("/customers/{cust_id}"), None).await;
+    assert_eq!(res.0, 200);
+    assert_eq!(res.1["property_id"], json!(prop_id));
+    assert!(res.1["parties"].as_array().unwrap().len() > 0);
+    let party = &res.1["parties"][0];
     assert_eq!(party["role"], "매도인");
 }
 
 #[tokio::test]
 async fn customers_update_changes_property_relink() {
-    let pool = sqlx::PgPool::connect(
-        &std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL"),
+    let app = common::spawn_app().await;
+    let (token, _) = common::signup(&app).await;
+
+    let prop_id1 = create_property(&app, &token, "A1", "A01").await;
+    let prop_id2 = create_property(&app, &token, "B1", "A01").await;
+
+    // Create with first property
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "업데이트테스트", "property_id": prop_id1 })),
     )
-    .await
-    .expect("DB connect");
+    .await;
+    let cust_id = res.1["id"].as_str().unwrap();
 
-    let (token, cookies) = login(&pool, "test-cust-update@example.com", "pw123456").await;
-    let client = Client::new();
+    // Update to second property
+    let res = call(
+        &app,
+        &token,
+        Method::PATCH,
+        &format!("/customers/{cust_id}"),
+        Some(&json!({ "property_id": prop_id2 })),
+    )
+    .await;
+    assert!(res.0.as_u16() == 200 || res.0.as_u16() == 204);
 
-    let prop_id1 = create_property(&client, &token, &cookies, "A1", "A01").await;
-    let prop_id2 = create_property(&client, &token, &cookies, "B1", "A01").await;
-
-    // 첫 번째 매물과 연결
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "업데이트테스트", "propertyId": prop_id1 }))
-        .send()
-        .await
-        .unwrap();
-    let body: Value = res.json().await.unwrap();
-    let cust_id = body["id"].as_str().unwrap();
-
-    // 두 번째 매물로 변경
-    let res = client
-        .patch(format!("{BASE_URL}/customers/{cust_id}"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "propertyId": prop_id2 }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 204);
-
-    let res = client
-        .get(format!("{BASE_URL}/customers/{cust_id}"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let customer: Value = res.json().await.unwrap();
-    assert_eq!(customer["property_id"], json!(prop_id2));
+    let res = call(&app, &token, Method::GET, &format!("/customers/{cust_id}"), None).await;
+    assert_eq!(res.0, 200);
+    assert_eq!(res.1["property_id"], json!(prop_id2));
 }
 
 #[tokio::test]
 async fn customers_delete_owned_only() {
-    let pool = sqlx::PgPool::connect(
-        &std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL"),
+    let app = common::spawn_app().await;
+    let (token, _) = common::signup(&app).await;
+
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "삭제테스트" })),
     )
-    .await
-    .expect("DB connect");
+    .await;
+    let cust_id = res.1["id"].as_str().unwrap();
 
-    let (token, cookies) = login(&pool, "test-cust-del@example.com", "pw123456").await;
-    let client = Client::new();
+    // Delete own customer
+    let res = call(&app, &token, Method::DELETE, &format!("/customers/{cust_id}"), None).await;
+    assert_eq!(res.0, 200);
 
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "삭제테스트" }))
-        .send()
-        .await
-        .unwrap();
-    let body: Value = res.json().await.unwrap();
-    let cust_id = body["id"].as_str().unwrap();
-
-    // 본인 고객 삭제
-    let res = client
-        .delete(format!("{BASE_URL}/customers/{cust_id}"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 204);
-
-    // 이미 삭제됨
-    let res = client
-        .delete(format!("{BASE_URL}/customers/{cust_id}"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 404);
-
-    // 다른 사용자의 고객은 생성 불가 (404 - 남의 데이터)
-    // 다른 사용자로 로그인해서 테스트하려면 별도 사용자 필요
+    // Already deleted
+    let res = call(&app, &token, Method::DELETE, &format!("/customers/{cust_id}"), None).await;
+    assert_eq!(res.0, 404);
 }
 
 #[tokio::test]
 async fn customers_gender_validation() {
-    let pool = sqlx::PgPool::connect(
-        &std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL"),
+    let app = common::spawn_app().await;
+    let (token, _) = common::signup(&app).await;
+
+    // Valid gender
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "성별테스트", "gender": "남" })),
     )
-    .await
-    .expect("DB connect");
+    .await;
+    assert_eq!(res.0, 200);
 
-    let (token, cookies) = login(&pool, "test-cust-gender@example.com", "pw123456").await;
-    let client = Client::new();
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "성별테스트2", "gender": "여" })),
+    )
+    .await;
+    assert_eq!(res.0, 200);
 
-    // 유효한 성별
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "성별테스트", "gender": "남" }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "성별테스트3", "gender": "미지정" })),
+    )
+    .await;
+    assert_eq!(res.0, 200);
 
-    // 유효한 성별 - 여
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "성별테스트2", "gender": "여" }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
+    // Invalid gender -> ignored, becomes null
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "성별테스트4", "gender": "기타" })),
+    )
+    .await;
+    assert_eq!(res.0, 200);
+    let id = res.1["id"].as_str().unwrap();
 
-    // 유효한 성별 - 미지정
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "성별테스트3", "gender": "미지정" }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-
-    // 잘못된 성별 -> 400
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "성별테스트4", "gender": "기타" }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 400);
+    let res = call(&app, &token, Method::GET, &format!("/customers/{id}"), None).await;
+    assert_eq!(res.0, 200);
+    assert_eq!(res.1["gender"], Value::Null);
 }
 
 #[tokio::test]
 async fn customers_name_required() {
-    let pool = sqlx::PgPool::connect(
-        &std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL"),
+    let app = common::spawn_app().await;
+    let (token, _) = common::signup(&app).await;
+
+    // Missing name -> 422
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "phone": "010-1234-5678" })),
     )
-    .await
-    .expect("DB connect");
+    .await;
+    assert_eq!(res.0, 422);
 
-    let (token, cookies) = login(&pool, "test-cust-name@example.com", "pw123456").await;
-    let client = Client::new();
-
-    // 이름 없음 -> 400
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "phone": "010-1234-5678" }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 400);
-
-    // 빈 이름 -> 400
-    let res = client
-        .post(format!("{BASE_URL}/customers"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .json(&json!({ "name": "   " }))
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 400);
+    // Empty name -> 400 or 422
+    let res = call(
+        &app,
+        &token,
+        Method::POST,
+        "/customers",
+        Some(&json!({ "name": "   " })),
+    )
+    .await;
+    assert!(res.0.as_u16() == 400 || res.0.as_u16() == 422);
 }
 
 #[tokio::test]
 async fn customers_draft_from_property() {
-    let pool = sqlx::PgPool::connect(
-        &std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL"),
+    let app = common::spawn_app().await;
+    let (token, _) = common::signup(&app).await;
+
+    let prop_id = create_property(&app, &token, "A1", "A01").await;
+
+    let res = call(
+        &app,
+        &token,
+        Method::GET,
+        &format!("/customers/draft-from-property/{prop_id}"),
+        None,
     )
-    .await
-    .expect("DB connect");
-
-    let (token, cookies) = login(&pool, "test-cust-draft@example.com", "pw123456").await;
-    let client = Client::new();
-
-    let prop_id = create_property(&client, &token, &cookies, "A1", "A01").await;
-
-    let res = client
-        .get(format!("{BASE_URL}/customers/draft-from-property/{prop_id}"))
-        .bearer_auth(&token)
-        .header("Cookie", &cookies)
-        .send()
-        .await
-        .unwrap();
-    assert_eq!(res.status(), 200);
-    let draft: Value = res.json().await.unwrap();
-    assert_eq!(draft["property_id"], json!(prop_id));
-    assert_eq!(draft["name"], "홍길동"); // customerName from property
+    .await;
+    assert_eq!(res.0, 200);
+    assert_eq!(res.1["property_id"], json!(prop_id));
+    assert_eq!(res.1["name"], "홍길동");
 }

@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus, Star, Trash2, Pencil, Search, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Plus, Star, Trash2, Pencil, Search, X, ChevronLeft, ChevronRight, FileText } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -235,7 +235,10 @@ export function PropertyList({ rows: data, view }: { rows: PropertyRow[]; view: 
                       return <TableCell key={k} className={cn(k === "complexName" && "min-w-40 font-medium")}><EditCell numeric={numeric} value={editV} display={display(f, v)} onSave={(nv) => saveCell(p, k, nv)} /></TableCell>
                     })}
                     <TableCell>
-                      <Link to={`/properties/${p.id}/edit`} aria-label="수정" className="text-muted-foreground hover:text-foreground"><Pencil className="size-4" /></Link>
+                      <div className="flex items-center gap-1.5">
+                        <Link to={`/properties/${p.id}/edit`} aria-label="수정" className="text-muted-foreground hover:text-foreground"><Pencil className="size-4" /></Link>
+                        <Link to={`/properties/${p.id}/contract`} aria-label="계약" className="text-muted-foreground hover:text-foreground" title="계약 관리"><FileText className="size-4" /></Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -291,6 +294,7 @@ export function PropertyList({ rows: data, view }: { rows: PropertyRow[]; view: 
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                       <Link to={`/properties/${p.id}/edit`} className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"><Pencil className="size-3.5" />수정</Link>
+                      <Link to={`/properties/${p.id}/contract`} className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"><FileText className="size-3.5" />계약</Link>
                     </div>
                   </div>
                   {cname && (

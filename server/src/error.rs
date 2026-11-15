@@ -47,3 +47,9 @@ impl From<serde_json::Error> for ApiError {
         ApiError::Internal(err.into())
     }
 }
+
+impl From<validator::ValidationErrors> for ApiError {
+    fn from(err: validator::ValidationErrors) -> Self {
+        ApiError::BadRequest(err.to_string())
+    }
+}

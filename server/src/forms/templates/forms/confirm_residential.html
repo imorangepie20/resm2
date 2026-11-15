@@ -8,11 +8,11 @@
   <tbody>
     <tr>
       <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">소재지</th>
-      <td class="border border-black px-2 py-2"><span class="fill-wide">{{ p.address | default("") }}</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-wide">{{ p.address | default(value="") }}</span></td>
     </tr>
     <tr>
       <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">대상물건 종류</th>
-      <td class="border border-black px-2 py-2"><span class="fill-medium">{{ p.realEstateType | default("") }}</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium">{{ p.realEstateType | default(value="") }}</span></td>
     </tr>
     <tr>
       <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">면적</th>
@@ -24,11 +24,11 @@
     </tr>
     <tr>
       <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">난방방식</th>
-      <td class="border border-black px-2 py-2"><span class="fill-medium">{{ p.heating | default("") }}</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium">{{ p.heating | default(value="") }}</span></td>
     </tr>
     <tr>
       <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">총세대수</th>
-      <td class="border border-black px-2 py-2"><span class="fill-medium">{{ p.totalHouseholds | default("") }}</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium">{{ p.totalHouseholds | default(value="") }}</span></td>
     </tr>
     <tr>
       <th class="w-32 border border-black bg-gray-100 px-2 py-2 text-left font-semibold">권리관계 (소유권·근저당 등)</th>

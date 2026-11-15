@@ -16,12 +16,12 @@
       </tr>
       <tr>
         <th class="border border-black bg-gray-100 px-3 py-3 text-center font-semibold">부동산 표시</th>
-        <td class="border border-black px-3 py-3"><span class="fill-wide">{{ p.address | default("") }}</span></td>
+        <td class="border border-black px-3 py-3"><span class="fill-wide">{{ p.address | default(value="") }}</span></td>
       </tr>
     </tbody>
   </table>
   <p class="my-6 text-center text-[13px]">위 금액을 부동산 거래대금으로 정히 영수합니다.</p>
-  {{ dt_line::date_line() }}
-  <div class="mt-2 text-right">영수인&nbsp;&nbsp;<span class="fill-short">{{ p.customerName | default("") }}</span> <span class="ml-1 text-gray-500">(인)</span></div>
+  {% include "forms/date_line.html" %}
+  <div class="mt-2 text-right">영수인&nbsp;&nbsp;<span class="fill-short">{{ p.customerName | default(value="") }}</span> <span class="ml-1 text-gray-500">(인)</span></div>
 </div>
 {% endblock %}

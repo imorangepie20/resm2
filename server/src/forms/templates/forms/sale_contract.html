@@ -1,10 +1,4 @@
 {% extends "base.html" %}
-{% import "forms/property_table.html" as prop_table %}
-{% import "forms/amount_rows.html" as amt_row %}
-{% import "forms/articles.html" as arts %}
-{% import "forms/special_terms.html" as spec %}
-{% import "forms/signatures.html" as sigs %}
-{% import "forms/date_line.html" as dt_line %}
 
 {% block content %}
 <h1>부동산 매매계약서</h1>
@@ -14,43 +8,106 @@
 
 <div class="section">
   <h2>1. 부동산의 표시</h2>
-  {{ prop_table::property_table(p) }}
+  {% include "forms/property_table.html" %}
 </div>
 
 <div class="section">
   <h2>2. 계약내용 — 매매대금</h2>
   <table class="amount-table w-full border-collapse border border-black">
     <tbody>
-      {{ amt_row::amount_row("매매대금", p.price | won, "아래 지불방법에 따라 지불한다.") }}
-      {{ amt_row::amount_row("계약금", "", "계약 체결 시 지불하고 영수함.") }}
-      {{ amt_row::amount_row("중도금", "", "지불일&nbsp;" ~ (p.interim1Date | ymd | fill_medium) | safe) }}
-      {{ amt_row::amount_row("잔 금", "", "지불일&nbsp;" ~ (p.balanceDate | ymd | fill_medium) | safe) }}
+      <tr>
+        <th class="w-24 border border-black bg-gray-100 px-2 py-2 text-center font-semibold">매매대금</th>
+        <td class="border border-black px-2 py-2">
+          金 {% if p.price %}<span class="fill-medium">{{ p.price | won }}</span>{% else %}<span class="fill-medium"></span>{% endif %} 원정
+          {% if p.price %}<span class="text-gray-600">(₩{{ p.price | won }})</span>{% else %}<span class="text-gray-500">(₩&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span>{% endif %}
+        </td>
+        <td class="w-[42%] border border-black px-2 py-2 text-gray-700">아래 지불방법에 따라 지불한다.</td>
+      </tr>
+      <tr>
+        <th class="w-24 border border-black bg-gray-100 px-2 py-2 text-center font-semibold">계약금</th>
+        <td class="border border-black px-2 py-2">
+          金 <span class="fill-medium"></span> 원정
+          <span class="text-gray-500">(₩&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span>
+        </td>
+        <td class="w-[42%] border border-black px-2 py-2 text-gray-700">계약 체결 시 지불하고 영수함.</td>
+      </tr>
+      <tr>
+        <th class="w-24 border border-black bg-gray-100 px-2 py-2 text-center font-semibold">중도금</th>
+        <td class="border border-black px-2 py-2">
+          金 <span class="fill-medium"></span> 원정
+          <span class="text-gray-500">(₩&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span>
+        </td>
+        <td class="w-[42%] border border-black px-2 py-2 text-gray-700">{{ "지불일&nbsp;" ~ (p.interim1Date | ymd | fill_medium) | safe }}</td>
+      </tr>
+      <tr>
+        <th class="w-24 border border-black bg-gray-100 px-2 py-2 text-center font-semibold">잔 금</th>
+        <td class="border border-black px-2 py-2">
+          金 <span class="fill-medium"></span> 원정
+          <span class="text-gray-500">(₩&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span>
+        </td>
+        <td class="w-[42%] border border-black px-2 py-2 text-gray-700">{{ "지불일&nbsp;" ~ (p.balanceDate | ymd | fill_medium) | safe }}</td>
+      </tr>
     </tbody>
   </table>
 </div>
 
 <div class="section">
-  {{ arts::articles([
-    ["목적", "위 부동산의 매매에 대하여 매도인과 매수인은 합의에 의하여 매매대금을 위와 같이 지불하기로 한다."],
-    ["소유권 이전 등", "매도인은 매매대금의 잔금을 수령함과 동시에 매수인에게 소유권이전등기에 필요한 모든 서류를 교부하고 등기절차에 협력하며, 위 부동산을 인도한다."],
-    ["제한물권 등의 소멸", "매도인은 위 부동산에 설정된 저당권·지상권·임차권 등 소유권 행사를 제한하는 권리나 미납 조세·공과금 등을 잔금 수령 전까지 그 권리의 하자 및 부담 등을 제거하여 완전한 소유권을 매수인에게 이전한다."],
-    ["지방세 등", "위 부동산에 관하여 발생한 수익의 귀속과 제세공과금 등의 부담은 인도일을 기준으로 정산한다."],
-    ["계약의 해제", "매수인이 매도인에게 중도금(중도금이 없을 때는 잔금)을 지불하기 전까지 매도인은 계약금의 배액을 상환하고, 매수인은 계약금을 포기하고 본 계약을 해제할 수 있다."],
-    ["채무불이행과 손해배상", "매도인 또는 매수인이 본 계약상의 내용을 이행하지 않을 경우 상대방은 불이행한 자에게 서면으로 최고하고 계약을 해제할 수 있으며, 손해배상을 청구할 수 있다."],
-    ["중개보수", "개업공인중개사는 매도인과 매수인의 본 계약 불이행에 대하여 책임을 지지 않는다. 중개보수는 본 계약 체결과 동시에 거래 당사자 쌍방이 각각 지불한다."],
-    ["확인·설명서 교부 등", "개업공인중개사는 중개대상물 확인·설명서를 작성하고 업무보증관계증서 사본을 첨부하여 거래 당사자 쌍방에게 교부한다."]
-  ]) }}
+  <ol class="articles">
+    <li><strong>목적.</strong> 위 부동산의 매매에 대하여 매도인과 매수인은 합의에 의하여 매매대금을 위와 같이 지불하기로 한다.</li>
+    <li><strong>소유권 이전 등.</strong> 매도인은 매매대금의 잔금을 수령함과 동시에 매수인에게 소유권이전등기에 필요한 모든 서류를 교부하고 등기절차에 협력하며, 위 부동산을 인도한다.</li>
+    <li><strong>제한물권 등의 소멸.</strong> 매도인은 위 부동산에 설정된 저당권·지상권·임차권 등 소유권 행사를 제한하는 권리나 미납 조세·공과금 등을 잔금 수령 전까지 그 권리의 하자 및 부담 등을 제거하여 완전한 소유권을 매수인에게 이전한다.</li>
+    <li><strong>지방세 등.</strong> 위 부동산에 관하여 발생한 수익의 귀속과 제세공과금 등의 부담은 인도일을 기준으로 정산한다.</li>
+    <li><strong>계약의 해제.</strong> 매수인이 매도인에게 중도금(중도금이 없을 때는 잔금)을 지불하기 전까지 매도인은 계약금의 배액을 상환하고, 매수인은 계약금을 포기하고 본 계약을 해제할 수 있다.</li>
+    <li><strong>채무불이행과 손해배상.</strong> 매도인 또는 매수인이 본 계약상의 내용을 이행하지 않을 경우 상대방은 불이행한 자에게 서면으로 최고하고 계약을 해제할 수 있으며, 손해배상을 청구할 수 있다.</li>
+    <li><strong>중개보수.</strong> 개업공인중개사는 매도인과 매수인의 본 계약 불이행에 대하여 책임을 지지 않는다. 중개보수는 본 계약 체결과 동시에 거래 당사자 쌍방이 각각 지불한다.</li>
+    <li><strong>확인·설명서 교부 등.</strong> 개업공인중개사는 중개대상물 확인·설명서를 작성하고 업무보증관계증서 사본을 첨부하여 거래 당사자 쌍방에게 교부한다.</li>
+  </ol>
 </div>
 
 <div class="section">
-  {{ spec::special_terms() }}
+  <div class="special-terms">
+    <div>특약사항 없음</div>
+    <div>위 특약사항은 계약 당사자 간의 합의에 따른다.</div>
+  </div>
 </div>
 
-{{ dt_line::date_line() }}
+<div class="date-line">
+  20&nbsp;&nbsp;년&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;일
+</div>
 
-{{ sigs::signatures([
-  { label: "매도인", name: p.customerName },
-  { label: "매수인" },
-  { label: "개업\n공인중개사" }
-]) }}
+<table class="signatures w-full border-collapse border border-black">
+  <thead>
+    <tr>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">구분</th>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">서명</th>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">성명</th>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">연락처</th>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">주소</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="border border-black px-2 py-2 text-center font-semibold">매도인</td>
+      <td class="border border-black px-2 py-2 text-center"><span class="fill-short"></span> <span class="text-gray-500">(인)</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium">{{ p.customerName | default(value="") }}</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-wide"></span></td>
+    </tr>
+    <tr>
+      <td class="border border-black px-2 py-2 text-center font-semibold">매수인</td>
+      <td class="border border-black px-2 py-2 text-center"><span class="fill-short"></span> <span class="text-gray-500">(인)</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-wide"></span></td>
+    </tr>
+    <tr>
+      <td class="border border-black px-2 py-2 text-center font-semibold">개업
+공인중개사</td>
+      <td class="border border-black px-2 py-2 text-center"><span class="fill-short"></span> <span class="text-gray-500">(인)</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-wide"></span></td>
+    </tr>
+  </tbody>
+</table>
 {% endblock %}

@@ -1,9 +1,12 @@
-import { createBrowserRouter, Navigate } from "react-router"
+import { createBrowserRouter, Link, Navigate } from "react-router"
 import { RedirectIfAuthed, RequireAuth } from "@/lib/auth"
 import { ShellLayout } from "@/components/layout/shell-layout"
 import { PropertyListPage } from "@/routes/properties/list-page"
 import { NewPropertyPage } from "@/routes/properties/new-page"
 import { EditPropertyPage } from "@/routes/properties/edit-page"
+import { ContractPage } from "@/routes/properties/contract-page"
+import { FormsPage } from "@/routes/properties/forms-page"
+import { CustomersPage } from "@/routes/properties/customers-page"
 import { NotFound } from "@/routes/not-found"
 import { AuthLayout } from "@/routes/auth-layout"
 import { LoginPage } from "@/routes/login"
@@ -40,6 +43,9 @@ export const router = createBrowserRouter([
           { path: "/properties/contracted", element: <PropertyListPage key="contracted" view="contracted" /> },
           { path: "/properties/new", element: <NewPropertyPage /> },
           { path: "/properties/:id/edit", element: <EditPropertyPage /> },
+          { path: "/properties/:id/contract", element: <ContractPage /> },
+          { path: "/properties/:id/forms", element: <FormsPage /> },
+          { path: "/customers", element: <CustomersPage /> },
         ],
       },
     ],

@@ -1,17 +1,24 @@
 use crate::contract::validate::{ChecklistItem, Progress};
-use serde::{Deserialize, Serialize};
+use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 use std::collections::HashMap;
 
+fn ser_datetime<S: Serializer>(v: &NaiveDateTime, s: S) -> Result<S::Ok, S::Error> {
+    s.collect_str(&v.format("%Y-%m-%dT%H:%M:%S%.3fZ"))
+}
+
 // ─── PropertyDto (properties API와 공유) ──────────────────────
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PropertyDto {
     pub id: String,
     pub is_favorite: bool,
     pub color_tag: Option<String>,
     pub status: String,
     pub source: String,
-    pub created_at: String,
+    #[serde(serialize_with = "ser_datetime")]
+    pub created_at: NaiveDateTime,
     pub name: Option<String>,
     pub article_no: Option<String>,
     pub complex_name: Option<String>,
@@ -51,7 +58,7 @@ pub struct PropertyDto {
 }
 
 // ─── ContractData (GET /contract/{id} 응답) ───────────────────
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ContractData {
     pub property: PropertyDto,
     pub checklist: Vec<ChecklistItem>,

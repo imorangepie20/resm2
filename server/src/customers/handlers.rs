@@ -1,5 +1,5 @@
 use crate::auth::extract::CurrentUser;
-use crate::customers::model::{CustomerInput, CustomerRow};
+use crate::customers::model::{CustomerInput, CustomerRow, CustomerUpdateInput};
 use crate::customers::repo as customers_repo;
 use crate::{ApiResult, AppState};
 use axum::extract::{Query, State};
@@ -54,7 +54,7 @@ pub async fn update_customer(
     user: CurrentUser,
     State(state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-    Json(input): Json<CustomerInput>,
+    Json(input): Json<CustomerUpdateInput>,
 ) -> ApiResult<()> {
     let property_id = input.property_id.clone();
     let data = input.to_data()?;

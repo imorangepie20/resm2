@@ -1,7 +1,5 @@
-{% macro articles(items) %}
-<ol class="articles space-y-1-5">
-  {% for title, body in items %}
-  <li><strong>제{{ loop.index }}조 ({{ title }})</strong> {{ body | safe }}</li>
+<ol class="articles">
+  {% for i in range(start=0, end=articles | length) %}
+  <li><strong>{{ articles[i][0] }}.</strong> {{ articles[i][1] }}</li>
   {% endfor %}
 </ol>
-{% endmacro %}

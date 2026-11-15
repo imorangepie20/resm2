@@ -205,8 +205,8 @@ pub async fn create_customer(
 
     sqlx::query(
         r#"
-        INSERT INTO "Customer" (id, "userId", "propertyId", types, name, zipcode, phone, address, email, gender, memo)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        INSERT INTO "Customer" (id, "userId", "propertyId", types, name, zipcode, phone, address, email, gender, memo, "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now(), now())
         "#,
     )
     .bind(&customer_id)
@@ -231,13 +231,15 @@ pub async fn create_customer(
         let trade_type: String = prop.get("tradeType");
         let role = owner_role_from_trade(Some(&trade_type));
 
+        let party_id = cuid2::create_id();
         sqlx::query(
             r#"
-            INSERT INTO "PropertyParty" ("propertyId", "customerId", role)
-            VALUES ($1, $2, $3)
+            INSERT INTO "PropertyParty" (id, "propertyId", "customerId", role)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT ("propertyId", "customerId", role) DO NOTHING
             "#,
         )
+        .bind(&party_id)
         .bind(pid)
         .bind(&customer_id)
         .bind(&role)

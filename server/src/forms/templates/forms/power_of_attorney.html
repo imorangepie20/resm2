@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% import "forms/date_line.html" as dt_line %}
 
 {% block content %}
 <h1>위 임 장</h1>
@@ -18,7 +17,7 @@
       </tr>
       <tr>
         <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">부동산 표시</th>
-        <td class="border border-black px-2 py-2"><span class="fill-wide">{{ p.address | default("") }}</span></td>
+        <td class="border border-black px-2 py-2"><span class="fill-wide">{{ p.address | default(value="") }}</span></td>
       </tr>
     </tbody>
   </table>
@@ -26,7 +25,7 @@
     <p class="font-semibold">위임사항</p>
     <p class="mt-1 leading-[2]">위 위임인은 수임인에게 위 표시 부동산에 관한 매매·임대차 계약의 체결 및 잔금 수령, 소유권이전등기 신청 등 일체의 행위를 위임합니다.</p>
   </div>
-  {{ dt_line::date_line() }}
+  {% include "forms/date_line.html" %}
   <div class="text-right">위임인&nbsp;&nbsp;<span class="fill-short"></span> <span class="ml-1 text-gray-500">(인)</span></div>
 </div>
 {% endblock %}

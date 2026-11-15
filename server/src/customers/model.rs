@@ -78,6 +78,52 @@ impl CustomerInput {
     }
 }
 
+/// Partial update input - all fields optional for PATCH
+#[derive(Debug, Deserialize, Default)]
+pub struct CustomerUpdateInput {
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub zipcode: Option<String>,
+    #[serde(default)]
+    pub phone: Option<String>,
+    #[serde(default)]
+    pub address: Option<String>,
+    #[serde(default)]
+    pub email: Option<String>,
+    #[serde(default)]
+    pub gender: Option<String>,
+    #[serde(default)]
+    pub memo: Option<String>,
+    #[serde(default)]
+    pub types: Option<Vec<String>>,
+    #[serde(default)]
+    pub property_id: Option<String>,
+}
+
+impl CustomerUpdateInput {
+    pub fn to_data(self) -> Result<CustomerData, ApiError> {
+        let name = self.name.map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
+        if let Some(ref n) = name {
+            if n.is_empty() {
+                return Err(ApiError::BadRequest("이름은 필수입니다".into()));
+            }
+        }
+        let gender = clean_gender(self.gender);
+        let types = self.types.as_deref().map(normalize_customer_types).unwrap_or_default();
+        Ok(CustomerData {
+            name: name.unwrap_or_default(),
+            zipcode: self.zipcode.map(|s| s.trim().to_string()).filter(|s| !s.is_empty()),
+            phone: self.phone.map(|s| s.trim().to_string()).filter(|s| !s.is_empty()),
+            address: self.address.map(|s| s.trim().to_string()).filter(|s| !s.is_empty()),
+            email: self.email.map(|s| s.trim().to_string()).filter(|s| !s.is_empty()),
+            gender,
+            memo: self.memo.map(|s| s.trim().to_string()).filter(|s| !s.is_empty()),
+            types,
+        })
+    }
+}
+
 #[derive(Debug)]
 pub struct CustomerData {
     pub name: String,

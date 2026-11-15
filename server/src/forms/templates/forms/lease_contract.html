@@ -1,10 +1,4 @@
 {% extends "base.html" %}
-{% import "forms/property_table.html" as prop_table %}
-{% import "forms/amount_rows.html" as amt_row %}
-{% import "forms/articles.html" as arts %}
-{% import "forms/special_terms.html" as spec %}
-{% import "forms/signatures.html" as sigs %}
-{% import "forms/date_line.html" as dt_line %}
 
 {% block content %}
 {% set monthly = (p.tradeType == "B2") %}
@@ -15,46 +9,109 @@
 
 <div class="section">
   <h2>1. 부동산의 표시</h2>
-  {{ prop_table::property_table(p) }}
+  {% include "forms/property_table.html" %}
 </div>
 
 <div class="section">
   <h2>2. 계약내용 — 보증금 및 차임</h2>
   <table class="amount-table w-full border-collapse border border-black">
     <tbody>
-      {{ amt_row::amount_row("보증금", p.price | won, "아래 지불방법에 따라 지불한다.") }}
-      {{ amt_row::amount_row("계약금", "", "계약 체결 시 지불하고 영수함.") }}
-      {{ amt_row::amount_row("잔 금", "", "지불일&nbsp;" ~ (p.balanceDate | ymd | fill_medium) | safe) }}
+      <tr>
+        <th class="w-24 border border-black bg-gray-100 px-2 py-2 text-center font-semibold">보증금</th>
+        <td class="border border-black px-2 py-2">
+          金 {% if p.price %}<span class="fill-medium">{{ p.price | won }}</span>{% else %}<span class="fill-medium"></span>{% endif %} 원정
+          {% if p.price %}<span class="text-gray-600">(₩{{ p.price | won }})</span>{% else %}<span class="text-gray-500">(₩&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span>{% endif %}
+        </td>
+        <td class="w-[42%] border border-black px-2 py-2 text-gray-700">아래 지불방법에 따라 지불한다.</td>
+      </tr>
+      <tr>
+        <th class="w-24 border border-black bg-gray-100 px-2 py-2 text-center font-semibold">계약금</th>
+        <td class="border border-black px-2 py-2">
+          金 <span class="fill-medium"></span> 원정
+          <span class="text-gray-500">(₩&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span>
+        </td>
+        <td class="w-[42%] border border-black px-2 py-2 text-gray-700">계약 체결 시 지불하고 영수함.</td>
+      </tr>
+      <tr>
+        <th class="w-24 border border-black bg-gray-100 px-2 py-2 text-center font-semibold">잔 금</th>
+        <td class="border border-black px-2 py-2">
+          金 <span class="fill-medium"></span> 원정
+          <span class="text-gray-500">(₩&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span>
+        </td>
+        <td class="w-[42%] border border-black px-2 py-2 text-gray-700">{{ "지불일&nbsp;" ~ (p.balanceDate | ymd | fill_medium) | safe }}</td>
+      </tr>
       {% if monthly %}
-      {{ amt_row::amount_row("차임(월세)", p.rentPrice | won, "매월 말일 지불(후불).") }}
+      <tr>
+        <th class="w-24 border border-black bg-gray-100 px-2 py-2 text-center font-semibold">차임(월세)</th>
+        <td class="border border-black px-2 py-2">
+          金 {% if p.rentPrice %}<span class="fill-medium">{{ p.rentPrice | won }}</span>{% else %}<span class="fill-medium"></span>{% endif %} 원정
+          {% if p.rentPrice %}<span class="text-gray-600">(₩{{ p.rentPrice | won }})</span>{% else %}<span class="text-gray-500">(₩&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span>{% endif %}
+        </td>
+        <td class="w-[42%] border border-black px-2 py-2 text-gray-700">매월 말일 지불(후불).</td>
+      </tr>
       {% endif %}
     </tbody>
   </table>
 </div>
 
 <div class="section">
-  {{ arts::articles([
-    ["목적", "위 부동산의 임대차에 관하여 임대인과 임차인은 합의에 의하여 보증금 및 차임을 위와 같이 지불하기로 한다."],
-    ["존속기간", "임대인은 위 부동산을 임대차 목적대로 사용·수익할 수 있는 상태로 인도하며, 임대차 기간은 인도일로부터 ___ 까지로 한다."],
-    ["용도변경 및 전대 등", "임차인은 임대인의 동의 없이 위 부동산의 용도나 구조를 변경하거나 전대·임차권 양도 또는 담보제공을 하지 못하며, 임대차 목적 이외의 용도로 사용할 수 없다."],
-    ["계약의 해지", "임차인의 차임 연체액이 2기의 차임액에 달하거나 제3조를 위반하였을 때 임대인은 즉시 본 계약을 해지할 수 있다."],
-    ["계약의 종료", "임대차계약이 종료된 경우 임차인은 위 부동산을 원상으로 회복하여 임대인에게 반환하고, 임대인은 보증금을 임차인에게 반환한다."],
-    ["계약의 해제", "임차인이 임대인에게 중도금(중도금이 없을 때는 잔금)을 지불하기 전까지 임대인은 계약금의 배액을 상환하고, 임차인은 계약금을 포기하고 본 계약을 해제할 수 있다."],
-    ["채무불이행과 손해배상", "임대인 또는 임차인이 본 계약상의 내용을 이행하지 않을 경우 상대방은 서면으로 최고하고 계약을 해제할 수 있으며, 손해배상을 청구할 수 있다."],
-    ["중개보수", "중개보수는 본 계약 체결과 동시에 거래 당사자 쌍방이 각각 지불하며, 개업공인중개사의 고의나 과실 없이 본 계약이 무효·취소·해제되어도 중개보수는 지급한다."],
-    ["확인·설명서 교부 등", "개업공인중개사는 중개대상물 확인·설명서를 작성하여 업무보증관계증서 사본을 첨부하여 거래 당사자 쌍방에게 교부한다."]
-  ]) }}
+  <ol class="articles">
+    <li><strong>목적.</strong> 위 부동산의 임대차에 관하여 임대인과 임차인은 합의에 의하여 보증금 및 차임을 위와 같이 지불하기로 한다.</li>
+    <li><strong>존속기간.</strong> 임대인은 위 부동산을 임대차 목적대로 사용·수익할 수 있는 상태로 인도하며, 임대차 기간은 인도일로부터 ___ 까지로 한다.</li>
+    <li><strong>용도변경 및 전대 등.</strong> 임차인은 임대인의 동의 없이 위 부동산의 용도나 구조를 변경하거나 전대·임차권 양도 또는 담보제공을 하지 못하며, 임대차 목적 이외의 용도로 사용할 수 없다.</li>
+    <li><strong>계약의 해지.</strong> 임차인의 차임 연체액이 2기의 차임액에 달하거나 제3조를 위반하였을 때 임대인은 즉시 본 계약을 해지할 수 있다.</li>
+    <li><strong>계약의 종료.</strong> 임대차계약이 종료된 경우 임차인은 위 부동산을 원상으로 회복하여 임대인에게 반환하고, 임대인은 보증금을 임차인에게 반환한다.</li>
+    <li><strong>계약의 해제.</strong> 임차인이 임대인에게 중도금(중도금이 없을 때는 잔금)을 지불하기 전까지 임대인은 계약금의 배액을 상환하고, 임차인은 계약금을 포기하고 본 계약을 해제할 수 있다.</li>
+    <li><strong>채무불이행과 손해배상.</strong> 임대인 또는 임차인이 본 계약상의 내용을 이행하지 않을 경우 상대방은 서면으로 최고하고 계약을 해제할 수 있으며, 손해배상을 청구할 수 있다.</li>
+    <li><strong>중개보수.</strong> 중개보수는 본 계약 체결과 동시에 거래 당사자 쌍방이 각각 지불하며, 개업공인중개사의 고의나 과실 없이 본 계약이 무효·취소·해제되어도 중개보수는 지급한다.</li>
+    <li><strong>확인·설명서 교부 등.</strong> 개업공인중개사는 중개대상물 확인·설명서를 작성하여 업무보증관계증서 사본을 첨부하여 거래 당사자 쌍방에게 교부한다.</li>
+  </ol>
 </div>
 
 <div class="section">
-  {{ spec::special_terms() }}
+  <div class="special-terms">
+    <div>특약사항 없음</div>
+    <div>위 특약사항은 계약 당사자 간의 합의에 따른다.</div>
+  </div>
 </div>
 
-{{ dt_line::date_line() }}
+<div class="date-line">
+  20&nbsp;&nbsp;년&nbsp;&nbsp;&nbsp;월&nbsp;&nbsp;&nbsp;일
+</div>
 
-{{ sigs::signatures([
-  { label: "임대인" },
-  { label: "임차인", name: p.customerName },
-  { label: "개업\n공인중개사" }
-]) }}
+<table class="signatures w-full border-collapse border border-black">
+  <thead>
+    <tr>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">구분</th>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">서명</th>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">성명</th>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">연락처</th>
+      <th class="border border-black bg-gray-100 px-2 py-2 text-center font-semibold">주소</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="border border-black px-2 py-2 text-center font-semibold">임대인</td>
+      <td class="border border-black px-2 py-2 text-center"><span class="fill-short"></span> <span class="text-gray-500">(인)</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-wide"></span></td>
+    </tr>
+    <tr>
+      <td class="border border-black px-2 py-2 text-center font-semibold">임차인</td>
+      <td class="border border-black px-2 py-2 text-center"><span class="fill-short"></span> <span class="text-gray-500">(인)</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium">{{ p.customerName | default(value="") }}</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-wide"></span></td>
+    </tr>
+    <tr>
+      <td class="border border-black px-2 py-2 text-center font-semibold">개업
+공인중개사</td>
+      <td class="border border-black px-2 py-2 text-center"><span class="fill-short"></span> <span class="text-gray-500">(인)</span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-medium"></span></td>
+      <td class="border border-black px-2 py-2"><span class="fill-wide"></span></td>
+    </tr>
+  </tbody>
+</table>
 {% endblock %}

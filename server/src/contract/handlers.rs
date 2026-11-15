@@ -16,11 +16,20 @@ pub async fn get_contract(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> ApiResult<Json<ContractData>> {
+    tracing::info!(user_id = %user.id, property_id = %id, "get_contract start");
     let property = find_property_for_contract(&state.db, &user.id, &id).await?;
+    tracing::info!(property_id = %id, real_estate_type = %property.real_estate_type(), trade_type = %property.trade_type(), "property found");
+
+    let ret = property.real_estate_type();
+    tracing::info!(ret = %ret, "real_estate_type");
+    let ret2 = property.trade_type();
+    tracing::info!(ret2 = %ret2, "trade_type");
 
     let checklist = resolve_checklist(property.real_estate_type(), property.trade_type());
+    tracing::info!(count = checklist.len(), "checklist resolved");
     let checked = property.contract_checklist_map();
-    let required_fields = required_field_keys(property.trade_type())
+    tracing::info!(count = checked.len(), "checked map built");
+    let required_fields: Vec<crate::contract::model::RequiredField> = required_field_keys(property.trade_type())
         .into_iter()
         .map(|k| crate::contract::model::RequiredField {
             key: k.to_string(),
@@ -28,12 +37,14 @@ pub async fn get_contract(
             filled: property_filled(&property, k),
         })
         .collect();
+    tracing::info!(count = required_fields.len(), "required_fields built");
     let progress = contract_progress(
         property.real_estate_type(),
         property.trade_type(),
         &checked,
         &property.to_json_value(),
     );
+    tracing::info!(done = progress.done, total = progress.total, "progress calculated");
     let status = property.status.clone();
 
     Ok(Json(ContractData {
@@ -83,7 +94,7 @@ pub async fn start_contract_handler(
 
     let checklist = resolve_checklist(property.real_estate_type(), property.trade_type());
     let checked = property.contract_checklist_map();
-    let required_fields = required_field_keys(property.trade_type())
+    let required_fields: Vec<crate::contract::model::RequiredField> = required_field_keys(property.trade_type())
         .into_iter()
         .map(|k| crate::contract::model::RequiredField {
             key: k.to_string(),
@@ -127,7 +138,7 @@ pub async fn complete_contract_handler(
 
     let checklist = resolve_checklist(property.real_estate_type(), property.trade_type());
     let checked = property.contract_checklist_map();
-    let required_fields = required_field_keys(property.trade_type())
+    let required_fields: Vec<crate::contract::model::RequiredField> = required_field_keys(property.trade_type())
         .into_iter()
         .map(|k| crate::contract::model::RequiredField {
             key: k.to_string(),
