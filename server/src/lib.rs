@@ -7,6 +7,7 @@ pub mod error;
 pub mod forms;
 pub mod http;
 pub mod notify;
+pub mod parties;
 pub mod properties;
 pub mod static_files;
 
@@ -46,6 +47,7 @@ fn api_v1(state: AppState) -> Router<AppState> {
         .merge(contract::handlers::routes())
         .merge(crate::forms::handlers::routes())
         .merge(crate::customers::handlers::routes())
+        .merge(crate::parties::handlers::routes())
         .fallback(api_not_found)
         .layer(from_fn_with_state(state.clone(), http::origin_check))
         .with_state(state)
