@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate, Link } from "react-router"
 import { useQuery } from "@tanstack/react-query"
-import { Printer, ChevronLeft, FileText, X } from "lucide-react"
+import { Printer, ChevronLeft, FileText, X, Calendar } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -168,9 +168,16 @@ export function FormsPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">양식 인쇄</h1>
-        <Button variant="outline" size="sm" onClick={() => navigate(`/properties/${id}/contract`)}>
-          <ChevronLeft className="size-3.5 mr-1" />계약 관리
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link to="/calendar">
+            <Button variant="outline" size="sm">
+              <Calendar className="size-3.5 mr-1" />일정
+            </Button>
+          </Link>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/properties/${id}/contract`)}>
+            <ChevronLeft className="size-3.5 mr-1" />계약 관리
+          </Button>
+        </div>
       </div>
 
       {contractQuery.isLoading ? (

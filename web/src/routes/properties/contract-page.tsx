@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useParams, useNavigate } from "react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Printer, AlertCircle, CheckCircle2, FileText } from "lucide-react"
+import { Printer, AlertCircle, CheckCircle2, FileText, Calendar } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -189,6 +189,11 @@ export function ContractPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => navigate("/properties")}>목록</Button>
+                <Link to="/calendar">
+                  <Button size="sm" variant="outline">
+                    <Calendar className="size-3.5 mr-1" />일정
+                  </Button>
+                </Link>
                 {!readOnly && data.status === "진행" && (
                   <Button size="sm" onClick={() => startMut.mutate()} disabled={startMut.isPending}>
                     {startMut.isPending ? "처리 중..." : "계약 시작"}

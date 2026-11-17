@@ -7,6 +7,7 @@ import { EditPropertyPage } from "@/routes/properties/edit-page"
 import { ContractPage } from "@/routes/properties/contract-page"
 import { FormsPage } from "@/routes/properties/forms-page"
 import { CustomersPage } from "@/routes/properties/customers-page"
+import { CalendarPage } from "@/routes/properties/calendar-page"
 import { NotFound } from "@/routes/not-found"
 import { AuthLayout } from "@/routes/auth-layout"
 import { LoginPage } from "@/routes/login"
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
           { path: "/properties/:id/edit", element: <EditPropertyPage /> },
           { path: "/properties/:id/contract", element: <ContractPage /> },
           { path: "/properties/:id/forms", element: <FormsPage /> },
+          { path: "/calendar", element: <CalendarPage /> },
           { path: "/customers", element: <CustomersPage /> },
         ],
       },
