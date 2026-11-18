@@ -23,6 +23,7 @@ export function setOnUnauthorized(fn: () => void) {
 }
 
 export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
+  console.log("[api] request:", path, init.method ?? "GET")
   const headers: Record<string, string> = {}
   if (init.body !== undefined) headers["Content-Type"] = "application/json"
 
@@ -39,13 +40,21 @@ export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
   let res: Response
   try {
     res = await fetch(`${API_BASE}${path}`, requestInit)
-  } catch {
+    console.log("[api] fetch completed:", res.status, res.ok)
+  } catch (e) {
+    console.log("[api] fetch error:", e)
     throw new ApiError(0, "서버에 연결할 수 없습니다")
   }
 
   if (res.ok) {
-    if (res.status === 204) return undefined as T
-    return (await res.json()) as T
+    // 204 No Content 또는 본문 없는 200 응답 처리
+    const contentLength = res.headers.get("content-length")
+    console.log("[api] response ok:", res.status, "content-length:", contentLength)
+    if (res.status === 204 || contentLength === "0") return undefined as T
+    const text = await res.text()
+    console.log("[api] response text:", text)
+    if (!text) return undefined as T
+    return JSON.parse(text) as T
   }
 
   let message: string | null = null
@@ -199,10 +208,24 @@ export async function createCustomer(input: CustomerInput): Promise<{ id: string
   return api("/customers", { method: "POST", body: input })
 }
 export async function updateCustomer(id: string, input: CustomerInput): Promise<void> {
-  await api(`/customers/${id}`, { method: "PATCH", body: input })
+  console.log("[updateCustomer] called:", id, input)
+  try {
+    await api(`/customers/${id}`, { method: "PATCH", body: input })
+    console.log("[updateCustomer] completed successfully")
+  } catch (e) {
+    console.log("[updateCustomer] error:", e)
+    throw e
+  }
 }
 export async function deleteCustomer(id: string): Promise<void> {
-  await api(`/customers/${id}`, { method: "DELETE" })
+  console.log("[deleteCustomer] called:", id)
+  try {
+    await api(`/customers/${id}`, { method: "DELETE" })
+    console.log("[deleteCustomer] completed successfully")
+  } catch (e) {
+    console.log("[deleteCustomer] error:", e)
+    throw e
+  }
 }
 
 // ─── 당사자 ─────────────────────────────────────────────

@@ -672,3 +672,58 @@ lities --id 1`
      Running `C:\Wspace\resm\target\debug\resm-server.exe`
 2026-11-15T14:27:55.579537Z  INFO resm_server: listening on 127.0.0.1:3104
 error: process didn't exit successfully: `C:\Wspace\resm\target\debug\resm-server.exe` (exit code: 1)
+cargo : warning: unused import: `post`
+At line:1 char:617
++ ... host:5173"; $env:RESM_COOKIE_SECURE = "false"; cargo run 2>&1 | Out-F ...
++                                                    ~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: unused import: `post`:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ --> server\src\parties\handlers.rs:6:34
+  |
+6 | use axum::routing::{delete, get, post};
+  |                                  ^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `PARTIES` is never used
+  --> server\src\contract\validate.rs:24:7
+   |
+24 | const PARTIES: &[(&str, &str)] = &[
+   |       ^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `GROUPS_RESI` is never used
+  --> server\src\contract\validate.rs:33:7
+   |
+33 | const GROUPS_RESI: &[&str] = &["A01", "A02", "A04", "C02", "C01"];
+   |       ^^^^^^^^^^^
+
+warning: constant `GROUPS_RESI_SINGLE` is never used
+  --> server\src\contract\validate.rs:34:7
+   |
+34 | const GROUPS_RESI_SINGLE: &[&str] = &["C03", "C04"];
+   |       ^^^^^^^^^^^^^^^^^^
+
+warning: constant `GROUPS_FACTORY` is never used
+  --> server\src\contract\validate.rs:37:7
+   |
+37 | const GROUPS_FACTORY: &[&str] = &["E02", "E04"];
+   |       ^^^^^^^^^^^^^^
+
+warning: function `ymd` is never used
+  --> server\src\events\repo.rs:13:4
+   |
+13 | fn ymd(year: i32, month: u32, day: u32) -> String {
+   |    ^^^
+
+warning: `resm-server` (lib) generated 6 warnings (run `cargo fix --lib -p resm-server` to apply 1 suggestion)
+   Compiling resm-server v0.1.0 (C:\Wspace\resm\server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 10.48s
+warning: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.
+1
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibi
+lities --id 1`
+     Running `C:\Wspace\resm\target\debug\resm-server.exe`
+2026-11-15T22:00:09.250629Z  INFO resm_server: listening on 127.0.0.1:3104

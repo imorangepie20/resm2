@@ -1,7 +1,7 @@
 
+import { useState } from "react"
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
 
 // 네이티브 window.confirm 대체 — 템플릿 스타일 확인 다이얼로그(controlled).
 export function ConfirmDialog({
@@ -32,6 +33,10 @@ export function ConfirmDialog({
   busy?: boolean
   onConfirm: () => void
 }) {
+  const handleConfirmClick = () => {
+    onConfirm()
+    onOpenChange(false)
+  }
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -41,9 +46,14 @@ export function ConfirmDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>{cancelText}</AlertDialogCancel>
-          <AlertDialogAction variant={destructive ? "destructive" : "default"} onClick={onConfirm} disabled={busy}>
+          <Button
+            variant={destructive ? "destructive" : "default"}
+            onClick={handleConfirmClick}
+            disabled={busy}
+            data-testid="confirm-dialog-action"
+          >
             {busy ? "처리 중" : confirmText}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

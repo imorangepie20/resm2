@@ -1,0 +1,19 @@
+﻿
+> web@0.1.0 dev
+> vite
+
+
+  VITE v8.3.8  ready in 853 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+오전 7:00:56 [vite] (client) [optimizer] bundling dependencies...
+오전 7:00:57 [vite] (client) dependency optimized: @base-ui/react/progress
+오전 7:00:57 [vite] (client) optimized dependencies changed. reloading
+오전 9:01:48 [vite] (client) hmr update /src/globals.css, /src/routes/properties/edit-page.tsx, /src/routes/properties/contract-page.tsx, /src/routes/properties/list-page.tsx, /src/routes/properties/party-section.tsx, /src/routes/properties/property-form.tsx, /src/routes/properties/property-list.tsx
+오전 9:05:54 [vite] (client) page reload src/router.tsx
+오전 9:05:57 [vite] (client) page reload src/router.tsx
+오전 9:09:18 [vite] (client) hmr update /src/globals.css, /src/routes/properties/contract-page.tsx
+오전 9:09:23 [vite] (client) hmr update /src/globals.css, /src/routes/properties/contract-page.tsx
+오전 9:09:27 [vite] (client) hmr update /src/globals.css, /src/routes/properties/forms-page.tsx
+오전 9:09:32 [vite] (client) hmr update /src/globals.css, /src/routes/properties/forms-page.tsx

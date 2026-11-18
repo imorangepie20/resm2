@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Plus, Search, X, Trash2, Pencil, User, Mail, Phone, MapPin, Calendar, FileText } from "lucide-react"
 import { toast } from "sonner"
@@ -64,6 +64,7 @@ function GenderBadge({ gender }: { gender: string | null }) {
 }
 
 export function CustomersPage() {
+  console.log("[CustomersPage] Component rendered")
   const qc = useQueryClient()
   const [q, setQ] = useState("")
   const [fType, setFType] = useState<string>("ALL")
@@ -103,25 +104,54 @@ export function CustomersPage() {
   const updateMut = useMutation({
     mutationFn: ({ id, input }: { id: string; input: CustomerInput }) => updateCustomer(id, input),
     onSuccess: () => {
+      console.log("[updateMut] onSuccess called")
       toast.success("고객 정보를 수정했습니다")
       setDialogOpen(false)
       setEditing(null)
       resetForm()
       qc.invalidateQueries({ queryKey: ["customers"] })
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      console.log("[updateMut] onError called:", e)
+      toast.error(e.message)
+    },
+    onSettled: () => {
+      console.log("[updateMut] onSettled called")
+    },
   })
 
   const removeMut = useMutation({
-    mutationFn: (ids: string[]) => Promise.all(ids.map((id) => deleteCustomer(id))),
-    onSuccess: () => {
+    mutationFn: async (ids: string[]) => {
+      console.log("[removeMut] mutationFn called with:", ids)
+      const result = await Promise.all(ids.map((id) => deleteCustomer(id)))
+      console.log("[removeMut] mutationFn completed:", result)
+      return result
+    },
+    onSuccess: (data) => {
+      console.log("[removeMut] onSuccess called with data:", data)
       toast.success("삭제했습니다")
       setSel(new Set())
       setConfirmOpen(false)
       qc.invalidateQueries({ queryKey: ["customers"] })
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      console.log("[removeMut] onError called:", e)
+      toast.error(e.message)
+    },
+    onSettled: (data, error) => {
+      console.log("[removeMut] onSettled called, data:", data, "error:", error)
+    },
   })
+
+  // Debug: log mutation state changes
+  useEffect(() => {
+    console.log("[CustomersPage] removeMut state changed:", {
+      isPending: removeMut.isPending,
+      isSuccess: removeMut.isSuccess,
+      isError: removeMut.isError,
+      status: removeMut.status,
+    })
+  }, [removeMut.isPending, removeMut.isSuccess, removeMut.isError, removeMut.status])
 
   const rows = query.data ?? []
   const kw = q.trim().toLowerCase()
@@ -195,6 +225,7 @@ export function CustomersPage() {
       types: form.types,
       propertyId: form.propertyId || null,
     }
+    console.log("[handleSubmit] input:", input, "editing:", editing?.id)
     if (!input.name) { toast.error("이름은 필수입니다"); return }
     if (editing) updateMut.mutate({ id: editing.id, input })
     else createMut.mutate(input)
@@ -367,7 +398,9 @@ export function CustomersPage() {
         title={`선택한 고객 ${sel.size}명을 삭제할까요?`}
         description="삭제한 고객은 되돌릴 수 없습니다."
         busy={removeMut.isPending}
-        onConfirm={() => removeMut.mutate([...sel])}
+        onConfirm={() => {
+          removeMut.mutate([...sel])
+        }}
       />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -375,8 +408,7 @@ export function CustomersPage() {
           <DialogHeader>
             <DialogTitle>{editing ? "고객 수정" : "새 고객 등록"}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <DialogContent className="p-4 pt-0 grid gap-4">
+          <div className="p-4 pt-0 grid gap-4">
               <div className="grid gap-2 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="name">이름 <span className="text-red-500">*</span></Label>
@@ -497,16 +529,19 @@ export function CustomersPage() {
                   disabled={createMut.isPending || updateMut.isPending}
                 />
               </div>
-            </DialogContent>
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={createMut.isPending || updateMut.isPending}>
                 취소
               </Button>
-              <Button type="submit" disabled={createMut.isPending || updateMut.isPending || !form.name.trim()}>
+              <Button
+                type="button"
+                disabled={createMut.isPending || updateMut.isPending || !form.name.trim()}
+                onClick={handleSubmit}
+              >
                 {createMut.isPending || updateMut.isPending ? "처리 중..." : (editing ? "수정 완료" : "등록")}
               </Button>
             </DialogFooter>
-          </form>
         </DialogContent>
       </Dialog>
     </div>

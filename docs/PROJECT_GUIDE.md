@@ -55,3 +55,4 @@
 - 2026-11-15: 2단계 Task 3 완료. 서버 고객 API(`GET/POST/PATCH/DELETE /customers`, `GET /customers/{id}`, `GET /customers/draft-from-property/{propertyId}`) 구현. 고객 유형 정규화(당사자 유형 우선·기본 단순방문), 성별 검증, 이름 필수 검증, 매물 연결 시 당사자 자동 업서트(`ownerRoleFromTrade` 연동), 검색(q: 이름/전화 부분일치)·유형 필터(type) 지원. 9개 통합 테스트 추가.
 - 2026-11-15: 2단계 Task 4 완료. 서버 당사자 API(`GET/POST/DELETE /properties/{propertyId}/parties`, `DELETE /properties/{propertyId}/parties/{partyId}`) 구현. 이름+전화(custKey) 매칭으로 기존 고객 재사용, 신규 고객 자동 생성, 매물 당사자 업서트(중복 방지), 역할 순서 정렬(매도인→매수인→임대인→임차인→중개), 삭제 시 링크만 제거(고객 유지). 타인 매물 404 처리. 8개 통합 테스트 통과.
 - 2026-11-17: 달력 라우트 수정. `/properties/:id/calendar` → `/calendar` 변경. 달력 API가 전역 달력(모든 매물/고객 이벤트 + 매물 파생 일정)이므로 매물 ID 없이 접근하도록 수정. 계약 관리·양식 페이지의 "일정" 링크 URL 동기화. 서버·웹 테스트 모두 통과.
+- 2026-11-18: 2단계 Task 11 완료. E2E 스모크 테스트 6건 모두 통과(계약 워크플로, 양식 인쇄, 고객 관리, 당사자 관리, 일정 관리). ConfirmDialog(AlertDialog 기반) 수정으로 삭제 확인 다이얼로그 정상 동작, 캘린더 URL 동기화 useEffect 의존성 정리(searchParams 제거), date 입력 fill 방식 개선.

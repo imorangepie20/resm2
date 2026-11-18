@@ -23,13 +23,6 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "계약 관리",
-    items: [
-      { title: "계약 진행", href: "/properties/progress", icon: CircleDashed },
-      { title: "계약 완료", href: "/properties/contracted", icon: CircleCheck },
-    ],
-  },
-  {
     label: "고객 관리",
     items: [
       { title: "고객 목록", href: "/customers", icon: Users },

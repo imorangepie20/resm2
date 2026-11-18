@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ApiError } from "@/lib/api"
 import { getProperty } from "@/lib/properties/api"
 import { PropertyForm } from "./property-form"
+import { PartySection } from "./party-section"
 
 // 원본의 "당사자" 섹션과 "고객으로 등록" 버튼은 2단계에서 되살린다.
 export function EditPropertyPage() {
@@ -26,7 +27,10 @@ export function EditPropertyPage() {
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold">매물 수정</h1>
       {query.data ? (
-        <PropertyForm key={id} property={query.data} />
+        <>
+          <PropertyForm key={id} property={query.data} />
+          <PartySection propertyId={id} tradeType={query.data.tradeType} />
+        </>
       ) : query.isError ? (
         <Empty className="border">
           <EmptyHeader>

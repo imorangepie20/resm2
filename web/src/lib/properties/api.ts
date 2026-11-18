@@ -41,6 +41,45 @@ export const updateProperty = (id: string, patch: PropertyInput) =>
   api<void>(`/properties/${encodeURIComponent(id)}`, { method: "PATCH", body: patch })
 export const deleteProperties = (ids: string[]) => api<{ count: number }>("/properties/delete", { method: "POST", body: { ids } })
 
+export type PartyRow = {
+  id: string
+  customer_id: string
+  name: string
+  phone: string | null
+  role: string
+}
+export type AddPartyInput = { role: string; name: string; phone?: string }
+export const listParties = (propertyId: string) => api<PartyRow[]>(`/properties/${encodeURIComponent(propertyId)}/parties`)
+export const addParty = (propertyId: string, input: AddPartyInput) =>
+  api<{ partyId: string; customerId: string }>(`/properties/${encodeURIComponent(propertyId)}/parties`, { method: "POST", body: input })
+export const removeParty = (propertyId: string, partyId: string) =>
+  api<void>(`/properties/${encodeURIComponent(propertyId)}/parties/${encodeURIComponent(partyId)}`, { method: "DELETE" })
+
+// Events / Calendar
+export type EventRow = {
+  id: string
+  title: string
+  date: string
+  startTime: string | null
+  category: string
+  memo: string | null
+  propertyId: string | null
+  propertyLabel: string | null
+  customerId: string | null
+  customerLabel: string | null
+}
+export type PropertyDateEvent = { date: string; label: string; propertyId: string; field: string }
+export type CalendarOption = { id: string; label: string }
+export type CalendarResponse = { events: EventRow[]; propertyDates: PropertyDateEvent[]; properties: CalendarOption[]; customers: CalendarOption[] }
+
+export type CreateEventInput = { title: string; date: string; startTime?: string; category: string; memo?: string; propertyId?: string; customerId?: string }
+export type UpdateEventInput = { title?: string; date?: string; startTime?: string; category?: string; memo?: string; propertyId?: string; customerId?: string }
+
+export const loadCalendar = (year: number, month: number) => api<CalendarResponse>(`/events?year=${year}&month=${month}`)
+export const createEvent = (input: CreateEventInput) => api<{ id: string }>("/events", { method: "POST", body: input })
+export const updateEvent = (id: string, input: UpdateEventInput) => api<void>(`/events/${encodeURIComponent(id)}`, { method: "PATCH", body: input })
+export const deleteEvent = (id: string) => api<void>(`/events/${encodeURIComponent(id)}`, { method: "DELETE" })
+
 /** 화면 문자열 값 → API 값. 빈 값은 null(비움). money 는 만원 입력을 원 문자열로(형식 오류면 throw). */
 export function toApiValue(field: PropertyField, raw: string): ApiValue {
   switch (field.type) {

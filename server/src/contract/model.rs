@@ -59,6 +59,7 @@ pub struct PropertyDto {
 
 // ─── ContractData (GET /contract/{id} 응답) ───────────────────
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ContractData {
     pub property: PropertyDto,
     pub checklist: Vec<ChecklistItem>,

@@ -65,6 +65,7 @@ export function ContractPage() {
   // 체크리스트 토글
   const toggleMut = useMutation({
     mutationFn: ({ itemId, checked }: { itemId: string; checked: boolean }) => toggleChecklist(id, itemId, checked),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["contract", id] }),
     onError: (e) => toast.error(e instanceof Error ? e.message : "저장 실패"),
   })
 
@@ -76,6 +77,7 @@ export function ContractPage() {
   // 전체 체크/해제
   const allMut = useMutation({
     mutationFn: (checked: boolean) => checklistAll(id, checked),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["contract", id] }),
     onError: (e) => toast.error(e instanceof Error ? e.message : "저장 실패"),
   })
 
@@ -130,20 +132,53 @@ export function ContractPage() {
     mutationFn: () => completeContract(id),
     onSuccess: () => {
       toast.success("계약완료로 전환했습니다")
+      qc.invalidateQueries({ queryKey: ["contract", id] })
+      qc.invalidateQueries({ queryKey: ["properties"] })
       navigate("/properties")
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "완료 처리 실패"),
   })
 
-  if (notFound || !query.data) {
+  if (notFound) {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-xl font-semibold">계약 관리</h1>
         <Empty className="border">
           <EmptyHeader>
             <EmptyMedia variant="icon"><FileQuestion /></EmptyMedia>
-            <EmptyTitle>{notFound ? "매물을 찾을 수 없습니다" : "계약 정보를 불러오지 못했습니다"}</EmptyTitle>
-            {!notFound && query.error && <EmptyDescription>{query.error.message}</EmptyDescription>}
+            <EmptyTitle>매물을 찾을 수 없습니다</EmptyTitle>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button nativeButton={false} render={<Link to="/properties" />}>매물 목록으로</Button>
+          </EmptyContent>
+        </Empty>
+      </div>
+    )
+  }
+
+  if (query.isLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-xl font-semibold">계약 관리</h1>
+        <Card className="gap-0">
+          <CardHeader className="border-b"><CardTitle>불러오는 중...</CardTitle></CardHeader>
+          <CardContent className="flex flex-col gap-4 p-4" aria-busy="true">
+            {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (query.isError) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-xl font-semibold">계약 관리</h1>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><FileQuestion /></EmptyMedia>
+            <EmptyTitle>계약 정보를 불러오지 못했습니다</EmptyTitle>
+            <EmptyDescription>{query.error.message}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button nativeButton={false} render={<Link to="/properties" />}>매물 목록으로</Button>
@@ -164,15 +199,7 @@ export function ContractPage() {
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold">계약 관리</h1>
 
-      {query.isLoading ? (
-        <Card className="gap-0">
-          <CardHeader className="border-b"><CardTitle>{title}</CardTitle></CardHeader>
-          <CardContent className="flex flex-col gap-4 p-4" aria-busy="true">
-            {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="h-8 w-full" />)}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
+      <div className="space-y-4">
           {/* 경고 배너 */}
           <div className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
             ⚠️ 실무 보조용 체크리스트·양식입니다. 공식·법적 효력을 보장하지 않으며, 구체적 거래는 전문가 확인이 필요합니다.
@@ -360,7 +387,6 @@ export function ContractPage() {
             </CardContent>
           </Card>
         </div>
-      )}
     </div>
   )
 }
