@@ -56,3 +56,4 @@
 - 2026-11-15: 2단계 Task 4 완료. 서버 당사자 API(`GET/POST/DELETE /properties/{propertyId}/parties`, `DELETE /properties/{propertyId}/parties/{partyId}`) 구현. 이름+전화(custKey) 매칭으로 기존 고객 재사용, 신규 고객 자동 생성, 매물 당사자 업서트(중복 방지), 역할 순서 정렬(매도인→매수인→임대인→임차인→중개), 삭제 시 링크만 제거(고객 유지). 타인 매물 404 처리. 8개 통합 테스트 통과.
 - 2026-11-17: 달력 라우트 수정. `/properties/:id/calendar` → `/calendar` 변경. 달력 API가 전역 달력(모든 매물/고객 이벤트 + 매물 파생 일정)이므로 매물 ID 없이 접근하도록 수정. 계약 관리·양식 페이지의 "일정" 링크 URL 동기화. 서버·웹 테스트 모두 통과.
 - 2026-11-18: 2단계 Task 11 완료. E2E 스모크 테스트 6건 모두 통과(계약 워크플로, 양식 인쇄, 고객 관리, 당사자 관리, 일정 관리). ConfirmDialog(AlertDialog 기반) 수정으로 삭제 확인 다이얼로그 정상 동작, 캘린더 URL 동기화 useEffect 의존성 정리(searchParams 제거), date 입력 fill 방식 개선.
+- 2026-11-19: 2단계 Task 12 완료. Windows NSIS 설치본(`RESM_0.1.0_x64-setup.exe`)·Android release APK(`app-universal-release.apk`) 모두 빌드 성공. Windows 앱 계약·고객·일정 메뉴 진입·전체 플로우 확인, Android 에뮬레이터 폰/태블릿 반응형·우편번호 검색·인쇄 동작 확인. 2단계 전체 기능(계약 워크플로/양식/고객/당사자/일정) 3플랫폼(브라우저·Windows·Android) 검증 완료. Zorin 재배포 절차 준비.
